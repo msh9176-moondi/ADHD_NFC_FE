@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -124,21 +124,22 @@
 
 .page {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 
-  margin: auto;
+  /* 제거 */
+  /* justify-content: center; */
 
-  .container {
-    width: 100%;
-    max-width: 412px;
+  margin: 0 auto;
+}
+.page .container {
+  width: 100%;
+  max-width: 412px;
+  flex: 1;
 
-    padding-top: 8;
-
-    flex: 1;
-  }
+  /* 단위 반드시 필요 */
+  padding-top: 8px; /* 또는 0, 필요하면 16px 등 */
 }

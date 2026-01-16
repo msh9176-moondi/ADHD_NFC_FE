@@ -62,12 +62,12 @@ function RootLayout() {
       <div className="page w-full">
         <div
           ref={pageRef}
-          className="w-full max-w-175 mx-auto flex flex-col h-full px-4"
+          className="w-full container mx-auto flex flex-col min-h-screen px-4"
         >
           <AppHeader />
 
-          <div className="flex-1 w-full flex gap-6">
-            <main className="container">
+          <div className="flex-1 flex items-center justify-center">
+            <main className="container w-full">
               <Outlet />
             </main>
           </div>

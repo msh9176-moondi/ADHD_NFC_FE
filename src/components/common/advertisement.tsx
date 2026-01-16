@@ -20,7 +20,7 @@ function Advertisement() {
           type="button"
           variant="outline"
           onClick={handlePurchaseClick}
-          className="w-full h-12 rounded-full bg-[#795549] text-[#F5F0E5] border-0 hover:bg-[#F5F0E5]/80 hover:text-[#795549] cursor-pointer text-[20px] font-semibold"
+          className="w-full h-12 rounded-full bg-[#795549] text-white border-0 hover:bg-white hover:text-[#795549] cursor-pointer text-[20px] font-semibold"
         >
           구매하기
         </Button>
