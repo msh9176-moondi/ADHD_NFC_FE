@@ -1,4 +1,3 @@
-import React from 'react';
 
 function GrowthPage() {
   return <div>GrowthPage</div>;
