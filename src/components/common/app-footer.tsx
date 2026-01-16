@@ -10,18 +10,20 @@ const items = [
 
 function AppFooter() {
   return (
-    <footer className=" border-gray-200 bg-[#F5F0E5]">
-      <nav>
-        <ul className="flex items-center justify-between py-4">
+    <footer
+      className="w-full self-stretch"
+      style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+    >
+      <nav className="w-full">
+        <ul className="w-full flex items-center justify-between py-4">
           {items.map((item) => (
             <li key={item.to} className="flex-1 flex justify-center">
               <NavLink
                 to={item.to}
-                className={({ isActive }) =>
-                  [
-                    // 터치 영역은 크게
-                    'inline-flex items-center justify-center px-2 py-1',
-                  ].join(' ')
+                className={() =>
+                  ['inline-flex items-center justify-center px-2 py-1'].join(
+                    ' '
+                  )
                 }
               >
                 {({ isActive }) => (

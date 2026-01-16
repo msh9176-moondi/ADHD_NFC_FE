@@ -11,9 +11,9 @@ function Advertisement() {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex flex-col items-center gap-3">
+      {/* <div className="flex flex-col items-center gap-3">
         <img src="/assets/logo.svg" alt="" />
-      </div>
+      </div> */}
 
       <div className="w-full px-4">
         <Button

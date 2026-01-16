@@ -1,8 +1,12 @@
 function AppHeader() {
   return (
-    <header className="flex items-center justify-center">
+    <header className="flex items-center justify-center pt-20">
       <div className="flex items-center justify-center">
-        <div>Appheader</div>
+        <img
+          src="/assets/sunglass.svg"
+          alt="Sunglasses"
+          className="h-30 w-auto"
+        />
       </div>
     </header>
   );
