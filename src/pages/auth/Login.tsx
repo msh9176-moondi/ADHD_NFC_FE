@@ -41,7 +41,7 @@ function LoginPage() {
           </div>
 
           {/* 로그인 버튼 */}
-          <Button className="w-26 h-11 rounded-full text-white font-medium mb-6 bg-[#795549] hover:bg-[#795549]/90 cursor-pointer">
+          <Button className="w-30 h-11 rounded-full text-white font-medium mb-6 bg-[#795549] hover:bg-[#795549]/90 cursor-pointer">
             로그인
           </Button>
         </div>
