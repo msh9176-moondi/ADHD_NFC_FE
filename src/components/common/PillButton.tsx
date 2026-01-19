@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type PillButtonProps = React.ComponentProps<typeof Button>;
-function PrimaryPillButton({ className, ...props }: PillButtonProps) {
+
+export function PrimaryPillButton({ className, ...props }: PillButtonProps) {
   return (
     <Button
       className={cn(
@@ -32,5 +33,3 @@ export function SocialPillButton({
     />
   );
 }
-
-export { PrimaryPillButton };

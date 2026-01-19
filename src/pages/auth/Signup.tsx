@@ -1,13 +1,12 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Asterisk, Eye, EyeOff } from "lucide-react";
+import { Asterisk } from "lucide-react";
 import { SocialPillButton } from "@/components/common/PillButton";
-import { useAuthStore } from "@/stores/authStore";
 
 const signupSchema = z
   .object({
