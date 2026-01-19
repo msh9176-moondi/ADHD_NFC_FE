@@ -15,23 +15,23 @@ function AppFooter() {
       style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
     >
       <nav className="w-full">
-        <ul className="w-full flex items-center justify-between py-4">
+        <ul className="w-full flex items-center justify-around mt-20 py-8">
           {items.map((item) => (
             <li key={item.to} className="flex-1 flex justify-center">
               <NavLink
                 to={item.to}
                 className={() =>
                   ["inline-flex items-center justify-center px-2 py-1"].join(
-                    " "
+                    " ",
                   )
                 }
               >
                 {({ isActive }) => (
                   <div
                     className={[
-                      "w-[35px] h-[35px] rounded-full",
+                      "w-12.5 h-12.5 rounded-full object-cover",
                       "flex items-center justify-center",
-                      "text-[10px] font-semibold",
+                      "text-[13px] font-semibold",
                       isActive
                         ? "bg-[#795549] text-white"
                         : "bg-[#DBA67A] text-white",

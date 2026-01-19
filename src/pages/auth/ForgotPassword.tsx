@@ -4,8 +4,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Asterisk, Mail } from "lucide-react";
+import { SocialPillButton } from "@/components/common/PillButton";
+import { useAuthStore } from "@/stores/authStore";
 
 const forgotPasswordSchema = z.object({
   email: z
@@ -19,6 +20,7 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const { forgotPassword, isLoading, error, clearError } = useAuthStore();
 
   const {
     register,
@@ -31,10 +33,16 @@ function ForgotPasswordPage() {
     },
   });
 
-  const onSubmit = (data: ForgotPasswordFormData) => {
-    console.log("비밀번호 재설정 요청:", data);
-    setSubmittedEmail(data.email);
-    setIsSubmitted(true);
+  const onSubmit = async (data: ForgotPasswordFormData) => {
+    clearError();
+
+    try {
+      await forgotPassword({ email: data.email });
+      setSubmittedEmail(data.email);
+      setIsSubmitted(true);
+    } catch {
+      // 에러는 store에서 처리됨
+    }
   };
 
   // 이메일 전송 완료 화면
@@ -72,15 +80,16 @@ function ForgotPasswordPage() {
 
   // 이메일 입력 화면
   return (
-    <div className="flex-1 flex flex-col items-center justify-center py-14">
+    <div className="flex-1 flex flex-col items-center justify-center py-8">
       <div className="w-full max-w-md">
         {/* 타이틀 */}
-        <div className="text-5xl text-[#795549] font-bold m-8 text-center">
-          비밀번호 찾기
+        <div className="flex flex-col text-5xl text-[#795549] font-bold m-8 text-center">
+          <span>Forgot</span>
+          <span>password</span>
         </div>
 
         {/* 안내 문구 */}
-        <p className="text-center text-[#795549]/70 mb-12">
+        <p className="text-center text-[#795549]/70 m-12">
           가입하신 이메일 주소를 입력해주세요.
           <br />
           비밀번호 재설정 링크를 보내드립니다.
@@ -106,13 +115,18 @@ function ForgotPasswordPage() {
             )}
           </div>
 
+          {/* API 에러 표시 */}
+          {error && (
+            <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
+          )}
+
           {/* 전송 버튼 */}
-          <Button
+          <SocialPillButton
             type="submit"
-            className="w-full h-12 rounded-full text-white font-medium bg-[#795549] hover:bg-[#795549]/90 cursor-pointer"
+            disabled={isLoading}
           >
-            재설정 링크 보내기
-          </Button>
+            {isLoading ? "전송 중..." : "재설정 링크 보내기"}
+          </SocialPillButton>
         </form>
 
         {/* 로그인으로 돌아가기 */}
