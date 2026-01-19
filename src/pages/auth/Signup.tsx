@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Asterisk } from "lucide-react";
 
 const signupSchema = z
   .object({
@@ -55,25 +56,31 @@ function SignupPage() {
   const privacyPolicy = watch("privacyPolicy");
   const marketing = watch("marketing");
 
+  const allChecked = termsOfService && privacyPolicy && marketing;
+
+  const handleAllCheck = (checked: boolean) => {
+    setValue("termsOfService", checked);
+    setValue("privacyPolicy", checked);
+    setValue("marketing", checked);
+  };
+
   const onSubmit = (data: SignupFormData) => {
     console.log("회원가입 데이터:", data);
   };
 
   return (
-    <div className="container">
+    <div className="flex-1 flex flex-col justify-center py-8">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="w-full flex flex-col items-center justify-center"
+        className="w-full flex flex-col items-center"
       >
         {/* 타이틀 */}
-        <div className="flex-1 flex items-center justify-center py-12 text-6xl text-[#795549] font-bold">
-          Sign up
-        </div>
+        <div className="text-6xl text-[#795549] font-bold mb-12">Sign up</div>
 
         {/* 이메일 입력 */}
         <div className="w-full mb-4">
           <div className="flex items-center gap-1 mb-2 pl-4">
-            <span className="text-red-500 text-sm">*</span>
+            <Asterisk className="text-red-500 size-3.5" />
             <label className="text-sm text-[#795549]">이메일</label>
           </div>
           <Input
@@ -92,7 +99,7 @@ function SignupPage() {
         {/* 비밀번호 입력 */}
         <div className="w-full mb-4">
           <div className="flex items-center gap-1 mb-2 pl-4">
-            <span className="text-red-500 text-sm">*</span>
+            <Asterisk className="text-red-500 size-3.5" />
             <label className="text-sm text-[#795549]">비밀번호</label>
           </div>
           <Input
@@ -109,9 +116,9 @@ function SignupPage() {
         </div>
 
         {/* 비밀번호 확인 입력 */}
-        <div className="w-full mb-6">
+        <div className="w-full mb-14">
           <div className="flex items-center gap-1 mb-2 pl-4">
-            <span className="text-red-500 text-sm">*</span>
+            <Asterisk className="text-red-500 size-3.5" />
             <label className="text-sm text-[#795549]">비밀번호 확인</label>
           </div>
           <Input
@@ -128,7 +135,22 @@ function SignupPage() {
         </div>
 
         {/* 약관 동의 */}
-        <div className="w-full mb-6 space-y-3">
+        <div className="w-full mb-16 space-y-3">
+          {/* 전체 동의 */}
+          <div className="flex items-center gap-3 pl-2 pb-2 border-b border-[#795549]/20">
+            <Checkbox
+              id="allAgree"
+              checked={allChecked}
+              onCheckedChange={(checked) => handleAllCheck(checked === true)}
+            />
+            <label
+              htmlFor="allAgree"
+              className="text-sm text-[#795549] font-semibold cursor-pointer"
+            >
+              전체 동의
+            </label>
+          </div>
+
           {/* 서비스 이용약관 동의 (필수) */}
           <div className="flex items-center gap-3 pl-2">
             <Checkbox
@@ -142,7 +164,7 @@ function SignupPage() {
               htmlFor="termsOfService"
               className="text-sm text-[#795549] cursor-pointer flex items-center gap-1"
             >
-              <span className="text-red-500">*</span>
+              <Asterisk className="text-red-500 size-3.5" />
               서비스 이용약관 동의 (필수)
             </label>
           </div>
@@ -165,7 +187,7 @@ function SignupPage() {
               htmlFor="privacyPolicy"
               className="text-sm text-[#795549] cursor-pointer flex items-center gap-1"
             >
-              <span className="text-red-500">*</span>
+              <Asterisk className="text-red-500 size-3.5" />
               개인정보 처리방침 동의 (필수)
             </label>
           </div>

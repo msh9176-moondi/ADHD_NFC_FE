@@ -1,8 +1,129 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Asterisk, Mail } from "lucide-react";
+
+const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, "이메일을 입력해주세요")
+    .email("올바른 이메일 형식을 입력해주세요"),
+});
+
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
 function ForgotPasswordPage() {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = (data: ForgotPasswordFormData) => {
+    console.log("비밀번호 재설정 요청:", data);
+    setSubmittedEmail(data.email);
+    setIsSubmitted(true);
+  };
+
+  // 이메일 전송 완료 화면
+  if (isSubmitted) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-8">
+        <div className="w-full max-w-md flex flex-col items-center">
+          {/* 아이콘 */}
+          <div className="w-20 h-20 rounded-full bg-[#F5F0E5] flex items-center justify-center mb-8">
+            <Mail className="w-10 h-10 text-[#795549]" />
+          </div>
+
+          {/* 타이틀 */}
+          <div className="text-4xl text-[#795549] font-bold mb-6">
+            이메일을 확인해주세요
+          </div>
+
+          {/* 안내 문구 */}
+          <p className="text-center text-[#795549]/70 mb-8">
+            <span className="font-medium text-[#795549]">{submittedEmail}</span>
+            으로 비밀번호 재설정 링크를 보내드렸습니다. 이메일을 확인해주세요.
+          </p>
+
+          {/* 로그인으로 돌아가기 */}
+          <Link
+            to="/auth/splash/login"
+            className="text-[#795549] underline cursor-pointer"
+          >
+            로그인으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // 이메일 입력 화면
   return (
-    <div className="w-full flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-150 px-6 py-8">
-        <h1 style={{ color: "#795549" }}>비밀번호 찾기</h1>
+    <div className="flex-1 flex flex-col items-center justify-center py-14">
+      <div className="w-full max-w-md">
+        {/* 타이틀 */}
+        <div className="text-5xl text-[#795549] font-bold m-8 text-center">
+          비밀번호 찾기
+        </div>
+
+        {/* 안내 문구 */}
+        <p className="text-center text-[#795549]/70 mb-12">
+          가입하신 이메일 주소를 입력해주세요.
+          <br />
+          비밀번호 재설정 링크를 보내드립니다.
+        </p>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full">
+          {/* 이메일 입력 */}
+          <div className="w-full mb-4">
+            <div className="flex items-center gap-1 mb-2 pl-4">
+              <Asterisk className="text-red-500 size-3.5" />
+              <label className="text-sm text-[#795549]">이메일</label>
+            </div>
+            <Input
+              type="email"
+              placeholder="이메일을 입력해주세요"
+              className="w-full h-12 px-6 border-none bg-[#F5F5F5] rounded-full focus-visible:border-[#795549] focus-visible:ring-[#795549]/20 text-[#795549] placeholder:text-[#795549]/50"
+              {...register("email")}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1 pl-4">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+
+          {/* 전송 버튼 */}
+          <Button
+            type="submit"
+            className="w-full h-12 rounded-full text-white font-medium bg-[#795549] hover:bg-[#795549]/90 cursor-pointer"
+          >
+            재설정 링크 보내기
+          </Button>
+        </form>
+
+        {/* 로그인으로 돌아가기 */}
+        <div className="text-center mt-6">
+          <Link
+            to="/auth/splash/login"
+            className="text-[#795549] underline cursor-pointer"
+          >
+            로그인으로 돌아가기
+          </Link>
+        </div>
       </div>
     </div>
   );
