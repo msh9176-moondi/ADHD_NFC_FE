@@ -1,12 +1,14 @@
-import { Link } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import {
+  PrimaryPillButton,
+  SocialPillButton,
+} from '@/components/common/PillButton';
 
 function LoginPage() {
   return (
     <div className="flex-1 flex flex-col justify-center py-8">
       <div className="flex flex-col gap-30">
-        {/* 일반 로그인 */}
         <div className="flex flex-col items-center w-full max-w-md mx-auto">
           <div className="text-6xl text-[#795549] font-bold mb-12">Log in</div>
 
@@ -31,32 +33,14 @@ function LoginPage() {
             </Link>
           </div>
 
-          <Button className="w-30 h-11 rounded-full text-white font-medium bg-[#795549] hover:bg-[#795549]/90">
-            로그인
-          </Button>
+          <PrimaryPillButton className="w-30">로그인</PrimaryPillButton>
         </div>
 
-        {/* 소셜 로그인 */}
         <div className="flex flex-col w-full max-w-md mx-auto">
           <div className="space-y-3 mb-6">
-            <Button
-              variant="outline"
-              className="w-full h-12 rounded-full font-medium bg-[#F5F0E5] text-[#795549] border-0 hover:bg-[#F5F0E5]/80 hover:text-[#795549]"
-            >
-              카카오 로그인
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-12 rounded-full font-medium bg-[#F5F0E5] text-[#795549] border-0 hover:bg-[#F5F0E5]/80 hover:text-[#795549]"
-            >
-              구글 로그인
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-12 rounded-full font-medium bg-[#F5F0E5] text-[#795549] border-0 hover:bg-[#F5F0E5]/80 hover:text-[#795549]"
-            >
-              네이버 로그인
-            </Button>
+            <SocialPillButton>카카오 로그인</SocialPillButton>
+            <SocialPillButton>구글 로그인</SocialPillButton>
+            <SocialPillButton>네이버 로그인</SocialPillButton>
           </div>
 
           <div className="text-center text-[#795549]">
