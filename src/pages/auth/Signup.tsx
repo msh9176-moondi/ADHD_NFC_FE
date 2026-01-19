@@ -1,12 +1,13 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Asterisk } from "lucide-react";
+import { Asterisk, Eye, EyeOff } from "lucide-react";
 import { SocialPillButton } from "@/components/common/PillButton";
+import { useAuthStore } from "@/stores/authStore";
 
 const signupSchema = z
   .object({
@@ -136,9 +137,9 @@ function SignupPage() {
               className="absolute right-4 top-1/2 -translate-y-1/2 text-[#795549]/50 hover:text-[#795549] transition-colors"
             >
               {showPassword ? (
-                <EyeOff className="size-5" />
-              ) : (
                 <Eye className="size-5" />
+              ) : (
+                <EyeOff className="size-5" />
               )}
             </button>
           </div>
@@ -173,9 +174,9 @@ function SignupPage() {
               className="absolute right-4 top-1/2 -translate-y-1/2 text-[#795549]/50 hover:text-[#795549] transition-colors"
             >
               {showConfirmPassword ? (
-                <EyeOff className="size-5" />
-              ) : (
                 <Eye className="size-5" />
+              ) : (
+                <EyeOff className="size-5" />
               )}
             </button>
           </div>
