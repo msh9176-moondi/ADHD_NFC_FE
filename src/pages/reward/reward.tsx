@@ -23,45 +23,54 @@ function getGrowthStage(level: number) {
 
 function RewardPage() {
   const navigate = useNavigate();
-
   const { level, xp, xpToNext, addXp } = useProgressStore();
-
   const growth = getGrowthStage(level);
+
+  // report 카드 효과 스타일
+  const cardClass = 'bg-white rounded-xl shadow-sm';
 
   return (
     <div className="flex-1 flex flex-col justify-center py-8">
       <div className="flex flex-col gap-10">
-        <div className="flex flex-col items-center w-full max-w-md mx-auto gap-4">
+        {/* 1) 코인 영역: 카드로 감싸기 */}
+        <div
+          className={`flex flex-col items-center w-full max-w-md mx-auto gap-4 ${cardClass} px-6 py-6`}
+        >
           <div className="text-2xl text-[#795549] font-bold mt-12">
             코인+15 획득!
           </div>
-
           <button
             type="button"
             onClick={() => addXp(15)}
-            className="active:scale-95 transition-transform"
+            className="active:scale-95 transition-transform mt-8"
             aria-label="코인 눌러서 XP 획득"
           >
             <img src="/assets/coin.svg" alt="coin" />
           </button>
 
-          <div className="w-full text-right mt-2 text-[#795549]">
-            지금 당신의 한 작은 걸음이, 내일의 큰 변화가 됩니다.
+          <div className="w-full text-right mt-0 text-[#795549]">
+            당신의 한 작은 걸음이, 내일의 큰 변화가 됩니다.
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-4">
+        {/* 2) 성장 영역: 카드로 감싸기 */}
+        <div
+          className={`flex flex-col items-center justify-center gap-4 mt-6 w-full max-w-md mx-auto ${cardClass} px-6 py-6`}
+        >
           <img src={growth.asset} alt="" />
           <p className="text-[#795549]">{growth.text}</p>
           <XpBar level={level} xp={xp} xpToNext={xpToNext} className="mt-4" />
         </div>
 
-        <div className="flex flex-col w-full max-w-md mx-auto">
-          <div className="space-y-3 mb-6">
-            <SocialPillButton onClick={() => navigate('/report')}>
-              기록하러 가기
-            </SocialPillButton>
-          </div>
+        {/* 3) 버튼 영역: 카드로 감싸기 (원하면 이건 빼도 됨) */}
+
+        <div className="space-y-3 mb-6">
+          <SocialPillButton
+            className="w-full h-12 rounded-full text-[13px] font-semibold flex items-center justify-center gap-2"
+            onClick={() => navigate('/report')}
+          >
+            기록하러 가기
+          </SocialPillButton>
         </div>
       </div>
     </div>
