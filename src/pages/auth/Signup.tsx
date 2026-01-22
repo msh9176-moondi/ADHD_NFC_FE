@@ -372,9 +372,9 @@ function SignupPage() {
         <SocialPillButton
           type="submit"
           className="text-lg font-bold cursor-pointer"
-          disabled={isLoading}
+          disabled={isLoading || socialLoading}
         >
-          {isLoading ? "회원가입 중..." : "회원가입"}
+          {isLoading || socialLoading ? "회원가입 중..." : "회원가입"}
         </SocialPillButton>
       </form>
 
