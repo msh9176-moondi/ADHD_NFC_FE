@@ -1,4 +1,7 @@
-import { SocialPillButton } from '@/components/common/PillButton';
+import {
+  PrimaryPillButton,
+  SocialPillButton,
+} from '@/components/common/PillButton';
 import XpBar from '@/components/common/XpBar';
 import { useProgressStore } from '@/store/progress';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +33,7 @@ function RewardPage() {
   const cardClass = 'bg-white rounded-xl shadow-sm';
 
   return (
-    <div className="flex-1 flex flex-col justify-center py-8">
+    <div className="flex-1 flex flex-col justify-center py-0">
       <div className="flex flex-col gap-10">
         {/* 1) 코인 영역: 카드로 감싸기 */}
         <div
@@ -62,16 +65,20 @@ function RewardPage() {
           <XpBar level={level} xp={xp} xpToNext={xpToNext} className="mt-4" />
         </div>
 
-        {/* 3) 버튼 영역: 카드로 감싸기 (원하면 이건 빼도 됨) */}
-
-        <div className="space-y-3 mb-6">
-          <SocialPillButton
-            className="w-full h-12 rounded-full text-[13px] font-semibold flex items-center justify-center gap-2"
+        {/* CTA */}
+        <section className="w-full mt-4">
+          <PrimaryPillButton
+            className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
             onClick={() => navigate('/report')}
           >
-            기록하러 가기
-          </SocialPillButton>
-        </div>
+            <span aria-hidden>✏️</span>
+            <span>기록하러 가기 →</span>
+          </PrimaryPillButton>
+
+          <p className="text-center text-[12px] text-[#795549]/70 mt-2">
+            오늘 하루 어땠나요? 알려줄래요?
+          </p>
+        </section>
       </div>
     </div>
   );

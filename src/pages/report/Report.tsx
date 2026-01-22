@@ -200,16 +200,16 @@ function ReportPage() {
         </section>
 
         {/* CTA */}
-        <section className="pt-4 space-y-3">
+        <section className="w-full mt-4">
           <PrimaryPillButton
-            className="w-full h-12 rounded-full text-[13px] font-semibold flex items-center justify-center gap-2"
+            className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
             onClick={() => navigate('/market')}
           >
             <span aria-hidden>🎁</span>
-            <span>나를 위한 선물 보러가기 / 완료</span>
+            <span>나를 위한 선물 보러가기 →</span>
           </PrimaryPillButton>
 
-          <p className="text-center text-[12px] text-[#795549]/70">
+          <p className="text-center text-[12px] text-[#795549]/70 mt-2">
             작은 실행들이 모여 큰 변화를 만들어냅니다.
           </p>
         </section>
