@@ -34,6 +34,7 @@ interface AuthState {
   updateAddress: (data: UpdateAddressRequest) => Promise<void>;
   forgotPassword: (data: ForgotPasswordRequest) => Promise<void>;
   resetPassword: (data: ResetPasswordRequest) => Promise<void>;
+  setAuth: (accessToken: string, user: User) => void;
   clearError: () => void;
 }
 
@@ -222,6 +223,17 @@ export const useAuthStore = create<AuthState>()(
           set({ error: message, isLoading: false });
           throw error;
         }
+      },
+
+      // 인증 상태 직접 설정 (소셜 로그인 콜백용)
+      setAuth: (accessToken, user) => {
+        set({
+          accessToken,
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
       },
 
       // 에러 초기화
