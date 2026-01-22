@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,61 @@ import {
 } from "@/components/common/PillButton";
 import { useAuthStore } from "@/stores/authStore";
 
+declare global {
+  interface Window {
+    Kakao: {
+      init: (key: string) => void;
+      isInitialized: () => boolean;
+      Auth: {
+        authorize: (options: { redirectUri: string; prompt?: string }) => void;
+      };
+    };
+  }
+}
+
+const KAKAO_CLIENT_ID = "154cf295c3f634df0177b3c4d2b53479";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID || "";
+
 function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+      window.Kakao.init(KAKAO_CLIENT_ID);
+    }
+  }, []);
+
+  const handleKakaoLogin = () => {
+    if (window.Kakao) {
+      window.Kakao.Auth.authorize({
+        redirectUri: `${window.location.origin}/auth/kakao/callback`,
+        prompt: "select_account", // 매번 계정 선택 화면 표시
+      });
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    const redirectUri = `${window.location.origin}/auth/google/callback`;
+    const scope = "email profile";
+    // prompt=select_account: 매번 계정 선택 화면 표시
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&prompt=select_account`;
+    window.location.href = googleAuthUrl;
+  };
+
+  const handleNaverLogin = () => {
+    const redirectUri = `${window.location.origin}/auth/naver/callback`;
+    const state = Math.random().toString(36).substring(7);
+    sessionStorage.setItem("naver_state", state);
+
+    // 네이버 OAuth URL (auth_type=reauthenticate: 매번 계정 선택 화면 표시)
+    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}&auth_type=reauthenticate`;
+    window.location.href = naverAuthUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,9 +134,9 @@ function LoginPage() {
 
         <div className="flex flex-col w-full max-w-md mx-auto">
           <div className="space-y-3 mb-6">
-            <SocialPillButton type="button">카카오 로그인</SocialPillButton>
-            <SocialPillButton type="button">구글 로그인</SocialPillButton>
-            <SocialPillButton type="button">네이버 로그인</SocialPillButton>
+            <SocialPillButton type="button" onClick={handleKakaoLogin}>카카오 로그인</SocialPillButton>
+            <SocialPillButton type="button" onClick={handleGoogleLogin}>구글 로그인</SocialPillButton>
+            <SocialPillButton type="button" onClick={handleNaverLogin}>네이버 로그인</SocialPillButton>
           </div>
 
           <div className="text-center text-sm text-[#795549]">

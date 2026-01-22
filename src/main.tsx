@@ -9,6 +9,9 @@ import SignupPage from "./pages/auth/Signup.tsx";
 import SplashPage from "./pages/auth/Splash.tsx";
 import ForgotPasswordPage from "./pages/auth/ForgotPassword.tsx";
 import ResetPasswordPage from "./pages/auth/ResetPassword.tsx";
+import KakaoCallbackPage from "./pages/auth/KakaoCallback.tsx";
+import GoogleCallbackPage from "./pages/auth/GoogleCallback.tsx";
+import NaverCallbackPage from "./pages/auth/NaverCallback.tsx";
 import GrowthPage from "./pages/growth/Growth.tsx";
 import MarketPage from "./pages/market/Market.tsx";
 import CartpagePage from "./pages/market/order/Cartpage.tsx";
@@ -42,6 +45,9 @@ createRoot(document.getElementById("root")!).render(
           <Route path="auth/splash/signup" element={<SignupPage />} />
           <Route path="auth/splash/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="auth/kakao/callback" element={<KakaoCallbackPage />} />
+          <Route path="auth/google/callback" element={<GoogleCallbackPage />} />
+          <Route path="auth/naver/callback" element={<NaverCallbackPage />} />
           {/* profile */}
           <Route path="profile" element={<ProfilePAge />} />
           <Route path="profile/recharge" element={<ProfilePAge />} />
