@@ -4,9 +4,15 @@ import { persist } from 'zustand/middleware';
 
 type ProgressState = {
   level: number;
-  xp: number; // 현재 레벨에서의 XP
-  xpToNext: number; // 레벨업에 필요한 XP (고정/가변 가능)
+  xp: number;
+  xpToNext: number;
+
+  coins: number; // ✅ 추가
   addXp: (amount: number) => void;
+
+  addCoins: (amount: number) => void; // ✅ 추가
+  spendCoins: (amount: number) => boolean; // ✅ 추가 (구매 시 사용)
+
   reset: () => void;
 };
 
@@ -17,13 +23,14 @@ export const useProgressStore = create<ProgressState>()(
       xp: 0,
       xpToNext: 100,
 
+      coins: 0, // ✅ 초기값
+
       addXp: (amount) => {
         const { xp, xpToNext, level } = get();
 
         let nextXp = xp + amount;
         let nextLevel = level;
 
-        // 레벨업 처리 (넘친 xp는 이월)
         while (nextXp >= xpToNext) {
           nextXp -= xpToNext;
           nextLevel += 1;
@@ -32,8 +39,19 @@ export const useProgressStore = create<ProgressState>()(
         set({ xp: nextXp, level: nextLevel });
       },
 
-      reset: () => set({ level: 1, xp: 0, xpToNext: 100 }),
+      addCoins: (amount) => {
+        set((s) => ({ coins: Math.max(0, (s.coins ?? 0) + amount) }));
+      },
+
+      spendCoins: (amount) => {
+        const { coins } = get();
+        if ((coins ?? 0) < amount) return false;
+        set({ coins: (coins ?? 0) - amount });
+        return true;
+      },
+
+      reset: () => set({ level: 1, xp: 0, xpToNext: 100, coins: 0 }),
     }),
-    { name: 'progress-store' }
-  )
+    { name: 'progress-store' },
+  ),
 );

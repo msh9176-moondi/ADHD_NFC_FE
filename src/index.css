@@ -143,3 +143,10 @@
   /* 단위 반드시 필요 */
   padding-top: 4x; /* 또는 0, 필요하면 16px 등 */
 }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
