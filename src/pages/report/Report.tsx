@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrimaryPillButton } from '@/components/common/PillButton';
+import { useRoutineStore } from '@/store';
 
 type MoodKey = 'excited' | 'calm' | 'sleepy' | 'tired' | 'angry';
 
@@ -12,13 +13,14 @@ const MOODS: Array<{ key: MoodKey; label: string; emoji: string }> = [
   { key: 'angry', label: '짜증', emoji: '😡' },
 ];
 
+// ✅ 루틴을 id 기반으로 변경 (랭킹/누적에 안전)
 const ROUTINES = [
-  '물 마시기 -  몸에게 주는 작은 선물',
-  '청소하기 - 마음도 함께 정돈돼요',
-  '걷기 - 생각이 맑아지는 시간',
-  '명상하기 - 잠시 멈춤의 여유',
-  '계획 세우기 - 내일을 위한 준비',
-];
+  { id: 'water', title: '물 마시기', subtitle: '몸에게 주는 작은 선물' },
+  { id: 'clean', title: '청소하기', subtitle: '마음도 함께 정돈돼요' },
+  { id: 'walk', title: '걷기', subtitle: '생각이 맑아지는 시간' },
+  { id: 'meditate', title: '명상하기', subtitle: '잠시 멈춤의 여유' },
+  { id: 'plan', title: '계획 세우기', subtitle: '내일을 위한 준비' },
+] as const;
 
 const SCALE_LABELS = [
   '거의 못함',
@@ -30,6 +32,7 @@ const SCALE_LABELS = [
 
 function ReportPage() {
   const navigate = useNavigate();
+  const { addCompletions } = useRoutineStore();
 
   const todayText = useMemo(() => {
     const d = new Date();
@@ -47,6 +50,19 @@ function ReportPage() {
   const [note, setNote] = useState('');
 
   const card = 'bg-white rounded-xl shadow-sm';
+
+  const handleSubmit = () => {
+    // ✅ 체크된 루틴 id 추출
+    const completedRoutineIds = ROUTINES.map((r, idx) =>
+      checked[idx] ? r.id : null,
+    ).filter(Boolean) as string[];
+
+    // ✅ 누적 저장(랭킹용)
+    addCompletions(completedRoutineIds);
+
+    // 다음 페이지 이동
+    navigate('/market');
+  };
 
   return (
     <div className="w-full px-4 pb-24">
@@ -98,12 +114,9 @@ function ReportPage() {
 
           <div className={`${card} px-5 py-4`}>
             <div className="relative pt-3 pb-7">
-              {/* Track + ticks + dot (visual) */}
               <div className="relative h-10">
-                {/* base line */}
                 <div className="absolute left-0 right-0 top-5 h-[2px] bg-[#795549]/30 rounded-full" />
 
-                {/* ticks */}
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
@@ -115,7 +128,6 @@ function ReportPage() {
                   />
                 ))}
 
-                {/* dot */}
                 <div
                   className="absolute top-[16px] h-4 w-4 rounded-full bg-[#795549] pointer-events-none"
                   style={{
@@ -124,7 +136,6 @@ function ReportPage() {
                   }}
                 />
 
-                {/* REAL slider (transparent) */}
                 <input
                   type="range"
                   min={0}
@@ -137,7 +148,6 @@ function ReportPage() {
                 />
               </div>
 
-              {/* labels */}
               <div className="mt-2 flex items-center justify-between text-[11px] font-medium text-[#DBA67A]">
                 {SCALE_LABELS.map((t) => (
                   <span key={t}>{t}</span>
@@ -154,9 +164,9 @@ function ReportPage() {
           </h3>
 
           <div className="space-y-3">
-            {ROUTINES.map((text, idx) => (
+            {ROUTINES.map((r, idx) => (
               <label
-                key={idx}
+                key={r.id}
                 className={[
                   card,
                   'px-4 py-3 flex items-center gap-3 cursor-pointer select-none',
@@ -171,7 +181,7 @@ function ReportPage() {
                   }
                 />
                 <span className="text-[13px] font-medium text-[#795549]">
-                  {text}
+                  {r.title} - {r.subtitle}
                 </span>
               </label>
             ))}
@@ -203,7 +213,7 @@ function ReportPage() {
         <section className="w-full mt-4">
           <PrimaryPillButton
             className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
-            onClick={() => navigate('/market')}
+            onClick={handleSubmit}
           >
             <span aria-hidden>🎁</span>
             <span>나를 위한 선물 보러가기 →</span>
