@@ -277,7 +277,8 @@ function MarketPage() {
                         <PolarGrid />
                         <Radar
                           dataKey="score"
-                          fill="var(--color-score)"
+                          fill="#DBA67A"
+                          stroke="#DBA67A"
                           fillOpacity={0.6}
                         />
                       </RadarChart>

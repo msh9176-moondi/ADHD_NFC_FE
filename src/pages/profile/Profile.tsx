@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { PrimaryPillButton } from '@/components/common/PillButton';
@@ -25,6 +24,7 @@ import {
   readTraitScores,
   type TraitKey,
 } from '@/utils/traitScore';
+import { useEffect, useMemo, useState } from 'react';
 
 const ROUTINES_META = [
   {
@@ -68,6 +68,29 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function ProfilePage() {
+  const [avatar, setAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('floca_avatar');
+    if (saved) setAvatar(saved);
+  }, []);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 이미지 파일만
+    if (!file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setAvatar(dataUrl);
+      localStorage.setItem('floca_avatar', dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const navigate = useNavigate();
 
   // progress store (필드가 프로젝트마다 다를 수 있으니 안전 캐스팅)
@@ -173,11 +196,33 @@ function ProfilePage() {
       <div className="max-w-md mx-auto">
         {/* 상단 프로필 */}
         <div className="pt-8 flex flex-col items-center">
-          <div className="w-16 h-16 rounded-full bg-[#D9A77F] flex items-center justify-center">
-            <span className="text-[26px]" aria-hidden>
-              👤
-            </span>
-          </div>
+          {/* 아바타(클릭 = 사진 변경) */}
+          <label className="cursor-pointe flex flex-col items-center justify-center">
+            <div className="w-32 h-32 rounded-full bg-[#D9A77F] flex items-center justify-center overflow-hidden transition hover:opacity-90 hover:scale-[1.02]">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt="프로필 사진"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-[60px]" aria-hidden>
+                  👤
+                </span>
+              )}
+            </div>
+
+            {/* hidden input */}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+            <p className="text-[12px] text-[#795549]/70 mt-1">
+              프로필 사진 변경
+            </p>
+          </label>
 
           <div className="w-full border-t border-[#DBA67A]/60 mt-6" />
 
@@ -314,7 +359,8 @@ function ProfilePage() {
                   <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11 }} />
                   <Radar
                     dataKey="score"
-                    fill="var(--color-score)"
+                    fill="#DBA67A"
+                    stroke="#DBA67A"
                     fillOpacity={0.35}
                   />
                 </RadarChart>
@@ -383,7 +429,9 @@ function ProfilePage() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#F5F0E5] flex items-center justify-center">
-                  <span aria-hidden>🧑‍⚕️</span>
+                  <span aria-hidden className="text-[20px]">
+                    👨‍⚕️
+                  </span>
                 </div>
                 <div>
                   <div className="text-[13px] font-semibold text-[#795549]">
@@ -410,13 +458,13 @@ function ProfilePage() {
                 title: 'ADHD 학습 자료',
                 desc: 'ADHD에 강한 학습 이해법',
                 icon: '📝',
-                to: '/partners/study',
+                to: 'https://blog.naver.com/msh4688',
               },
               {
                 title: 'ADHD 커뮤니티',
                 desc: '리포트 공유, 동료와 함께',
                 icon: '👥',
-                to: '/partners/community',
+                to: 'https://open.kakao.com/o/gOW56u7h',
               },
               {
                 title: '병원 연계 서비스',
@@ -428,7 +476,13 @@ function ProfilePage() {
               <button
                 key={it.title}
                 type="button"
-                onClick={() => navigate(it.to)}
+                onClick={() => {
+                  if (it.to.startsWith('http')) {
+                    window.open(it.to, '_blank', 'noopener,noreferrer');
+                  } else {
+                    navigate(it.to);
+                  }
+                }}
                 className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-[#DBA67A]/20"
               >
                 <div className="flex items-center justify-between">

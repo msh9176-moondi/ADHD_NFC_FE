@@ -219,7 +219,7 @@ function ReportPage() {
             onClick={handleSubmit}
           >
             <span aria-hidden>🎁</span>
-            <span>나를 위한 선물 보러가기 →</span>
+            <span>나를 위한 선물 보러가기/저장 →</span>
           </PrimaryPillButton>
 
           <p className="text-center text-[12px] text-[#795549]/70 mt-2">
