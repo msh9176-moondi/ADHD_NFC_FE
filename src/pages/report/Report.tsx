@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrimaryPillButton } from '@/components/common/PillButton';
-import { useRoutineStore } from '@/store';
+import { useMoodStore, useRoutineStore } from '@/store';
 
 type MoodKey = 'excited' | 'calm' | 'sleepy' | 'tired' | 'angry';
 
@@ -50,8 +50,11 @@ function ReportPage() {
   const [note, setNote] = useState('');
 
   const card = 'bg-white rounded-xl shadow-sm';
+  const { addMoodLog } = useMoodStore();
 
   const handleSubmit = () => {
+    // 1) 감정 저장 (프로필 그래프용)
+    addMoodLog(mood);
     // ✅ 체크된 루틴 id 추출
     const completedRoutineIds = ROUTINES.map((r, idx) =>
       checked[idx] ? r.id : null,
