@@ -55,7 +55,7 @@ function RewardPage() {
   const cardClass = 'bg-white rounded-xl shadow-sm';
 
   return (
-    <div className="flex-1 flex flex-col justify-center py-0">
+    <div className="flex-1 flex flex-col justify-center py-0 ">
       <div className="flex flex-col gap-10">
         {/* 1) 코인 영역: 카드로 감싸기 */}
         <div

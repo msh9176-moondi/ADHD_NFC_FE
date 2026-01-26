@@ -68,7 +68,7 @@ function ReportPage() {
   };
 
   return (
-    <div className="w-full px-4 pb-24">
+    <div className="w-full px-4 ">
       {/* date */}
       <div className="pt-6">
         <div className="text-center text-[14px] font-semibold text-[#795549]">

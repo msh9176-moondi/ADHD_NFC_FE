@@ -192,7 +192,7 @@ function ProfilePage() {
   const cardSoft = 'bg-[#F5F0E5] rounded-2xl p-5 text-center';
 
   return (
-    <div className="w-full px-4 pb-24">
+    <div className="w-full px-4 ">
       <div className="max-w-md mx-auto">
         {/* 상단 프로필 */}
         <div className="pt-8 flex flex-col items-center">
@@ -519,16 +519,6 @@ function ProfilePage() {
               <br />
               앞으로도 당신만의 속도로 천천히 나아가요.
             </p>
-          </div>
-
-          <div className="mt-6">
-            <PrimaryPillButton
-              className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
-              onClick={() => navigate('/report')}
-            >
-              <span aria-hidden>✏️</span>
-              <span>기록하러 가기 →</span>
-            </PrimaryPillButton>
           </div>
         </section>
       </div>
