@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 function AppHeader() {
   const navigate = useNavigate();
   const handleLogoClick = () => {
-    navigate("/");
+    navigate("/reward");
   };
   return (
     <header className="flex items-center justify-center p-14">

@@ -71,7 +71,7 @@ function LoginPage() {
     try {
       await login({ email, password });
       alert("로그인 되었습니다!");
-      navigate("/");
+      navigate("/reward");
     } catch {
       // 에러는 store에서 처리됨
     }
@@ -134,9 +134,15 @@ function LoginPage() {
 
         <div className="flex flex-col w-full max-w-md mx-auto">
           <div className="space-y-3 mb-6">
-            <SocialPillButton type="button" onClick={handleKakaoLogin}>카카오 로그인</SocialPillButton>
-            <SocialPillButton type="button" onClick={handleGoogleLogin}>구글 로그인</SocialPillButton>
-            <SocialPillButton type="button" onClick={handleNaverLogin}>네이버 로그인</SocialPillButton>
+            <SocialPillButton type="button" onClick={handleKakaoLogin}>
+              카카오 로그인
+            </SocialPillButton>
+            <SocialPillButton type="button" onClick={handleGoogleLogin}>
+              구글 로그인
+            </SocialPillButton>
+            <SocialPillButton type="button" onClick={handleNaverLogin}>
+              네이버 로그인
+            </SocialPillButton>
           </div>
 
           <div className="text-center text-sm text-[#795549]">

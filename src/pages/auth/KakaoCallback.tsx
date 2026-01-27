@@ -46,7 +46,7 @@ function KakaoCallbackPage() {
           const { accessToken, user } = response.data;
           useAuthStore.getState().setAuth(accessToken, user);
           alert("카카오 로그인 성공!");
-          navigate("/");
+          navigate("/growth");
         }
       } catch (err: any) {
         console.error("카카오 로그인 에러:", err);

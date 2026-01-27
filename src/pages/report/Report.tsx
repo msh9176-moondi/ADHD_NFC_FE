@@ -1,33 +1,33 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PrimaryPillButton } from '@/components/common/PillButton';
-import { useMoodStore, useRoutineStore } from '@/store';
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import { useMoodStore, useRoutineStore, useReportStore } from "@/store";
 
-type MoodKey = 'excited' | 'calm' | 'sleepy' | 'tired' | 'angry';
+type MoodKey = "excited" | "calm" | "sleepy" | "tired" | "angry";
 
 const MOODS: Array<{ key: MoodKey; label: string; emoji: string }> = [
-  { key: 'excited', label: '들뜸', emoji: '🤩' },
-  { key: 'calm', label: '평온', emoji: '😊' },
-  { key: 'sleepy', label: '피곤', emoji: '😴' },
-  { key: 'tired', label: '무기력', emoji: '😣' },
-  { key: 'angry', label: '짜증', emoji: '😡' },
+  { key: "excited", label: "들뜸", emoji: "🤩" },
+  { key: "calm", label: "평온", emoji: "😊" },
+  { key: "sleepy", label: "피곤", emoji: "😴" },
+  { key: "tired", label: "무기력", emoji: "😣" },
+  { key: "angry", label: "짜증", emoji: "😡" },
 ];
 
 // ✅ 루틴을 id 기반으로 변경 (랭킹/누적에 안전)
 const ROUTINES = [
-  { id: 'water', title: '물 마시기', subtitle: '몸에게 주는 작은 선물' },
-  { id: 'clean', title: '청소하기', subtitle: '마음도 함께 정돈돼요' },
-  { id: 'walk', title: '걷기', subtitle: '생각이 맑아지는 시간' },
-  { id: 'meditate', title: '명상하기', subtitle: '잠시 멈춤의 여유' },
-  { id: 'plan', title: '계획 세우기', subtitle: '내일을 위한 준비' },
+  { id: "water", title: "물 마시기", subtitle: "몸에게 주는 작은 선물" },
+  { id: "clean", title: "청소하기", subtitle: "마음도 함께 정돈돼요" },
+  { id: "walk", title: "걷기", subtitle: "생각이 맑아지는 시간" },
+  { id: "meditate", title: "명상하기", subtitle: "잠시 멈춤의 여유" },
+  { id: "plan", title: "계획 세우기", subtitle: "내일을 위한 준비" },
 ] as const;
 
 const SCALE_LABELS = [
-  '거의 못함',
-  '조금 함',
-  '절반 정도',
-  '대부분 함',
-  '거의 다함',
+  "거의 못함",
+  "조금 함",
+  "절반 정도",
+  "대부분 함",
+  "거의 다함",
 ];
 
 function ReportPage() {
@@ -36,35 +36,50 @@ function ReportPage() {
 
   const todayText = useMemo(() => {
     const d = new Date();
-    return d.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'long',
+    return d.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "long",
     });
   }, []);
 
-  const [mood, setMood] = useState<MoodKey>('excited');
+  const [mood, setMood] = useState<MoodKey>("excited");
   const [routineScore, setRoutineScore] = useState<number>(2); // 0~4
   const [checked, setChecked] = useState<Record<number, boolean>>({});
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
 
-  const card = 'bg-white rounded-xl shadow-sm';
+  const card = "bg-white rounded-xl shadow-sm";
   const { addMoodLog } = useMoodStore();
+  const { saveDailyLog, isLoading } = useReportStore();
 
-  const handleSubmit = () => {
-    // 1) 감정 저장 (프로필 그래프용)
-    addMoodLog(mood);
+  const handleSubmit = async () => {
     // ✅ 체크된 루틴 id 추출
     const completedRoutineIds = ROUTINES.map((r, idx) =>
       checked[idx] ? r.id : null,
     ).filter(Boolean) as string[];
 
-    // ✅ 누적 저장(랭킹용)
-    addCompletions(completedRoutineIds);
+    try {
+      // 1) 백엔드에 일일 리포트 저장
+      await saveDailyLog({
+        mood,
+        routineScore,
+        completedRoutines: completedRoutineIds,
+        note: note || undefined,
+      });
 
-    // 다음 페이지 이동
-    navigate('/market');
+      // 2) 로컬 상태도 업데이트 (프로필 그래프용)
+      addMoodLog(mood);
+
+      // 3) 누적 저장(랭킹용)
+      addCompletions(completedRoutineIds);
+
+      // 다음 페이지 이동
+      navigate("/market");
+    } catch (error) {
+      console.error("리포트 저장 실패:", error);
+      alert("저장에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   return (
@@ -93,12 +108,12 @@ function ReportPage() {
                     type="button"
                     onClick={() => setMood(m.key)}
                     className={[
-                      'h-11 w-11 rounded-full flex items-center justify-center',
-                      'text-[28px] leading-none transition',
+                      "h-11 w-11 rounded-full flex items-center justify-center",
+                      "text-[28px] leading-none transition",
                       active
-                        ? 'ring-2 ring-[#795549]/60 bg-[#F5F0E5]'
-                        : 'bg-transparent',
-                    ].join(' ')}
+                        ? "ring-2 ring-[#795549]/60 bg-[#F5F0E5]"
+                        : "bg-transparent",
+                    ].join(" ")}
                     aria-label={m.label}
                   >
                     <span aria-hidden>{m.emoji}</span>
@@ -118,24 +133,24 @@ function ReportPage() {
           <div className={`${card} px-5 py-4`}>
             <div className="relative pt-3 pb-7">
               <div className="relative h-10">
-                <div className="absolute left-0 right-0 top-5 h-[2px] bg-[#795549]/30 rounded-full" />
+                <div className="absolute left-0 right-0 top-5 h-0.5 bg-[#795549]/30 rounded-full" />
 
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="absolute top-[14px] h-6 w-[2px] bg-[#795549]/35"
+                    className="absolute top-3.5 h-6 w-0.5 bg-[#795549]/35"
                     style={{
                       left: `${(i / 4) * 100}%`,
-                      transform: 'translateX(-1px)',
+                      transform: "translateX(-1px)",
                     }}
                   />
                 ))}
 
                 <div
-                  className="absolute top-[16px] h-4 w-4 rounded-full bg-[#795549] pointer-events-none"
+                  className="absolute top-4 h-4 w-4 rounded-full bg-[#795549] pointer-events-none"
                   style={{
                     left: `${(routineScore / 4) * 100}%`,
-                    transform: 'translate(-50%, 0)',
+                    transform: "translate(-50%, 0)",
                   }}
                 />
 
@@ -172,8 +187,8 @@ function ReportPage() {
                 key={r.id}
                 className={[
                   card,
-                  'px-4 py-3 flex items-center gap-3 cursor-pointer select-none',
-                ].join(' ')}
+                  "px-4 py-3 flex items-center gap-3 cursor-pointer select-none",
+                ].join(" ")}
               >
                 <input
                   type="checkbox"
@@ -203,11 +218,11 @@ function ReportPage() {
               onChange={(e) => setNote(e.target.value)}
               placeholder="오늘 내가 해낸 것 중 가장 괜찮았거나 잘안 된 것은..."
               className={[
-                'w-full min-h-[90px] resize-none bg-transparent',
-                'text-[13px] font-medium text-[#795549]',
-                'placeholder:text-[#DBA67A]',
-                'outline-none',
-              ].join(' ')}
+                "w-full min-h-22.5 resize-none bg-transparent",
+                "text-[13px] font-medium text-[#795549]",
+                "placeholder:text-[#DBA67A]",
+                "outline-none",
+              ].join(" ")}
             />
           </div>
         </section>
@@ -215,11 +230,20 @@ function ReportPage() {
         {/* CTA */}
         <section className="w-full mt-4">
           <PrimaryPillButton
-            className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
+            className="w-full text-[13px] font-semibold flex flex-col items-center justify-center py-7 leading-tight"
             onClick={handleSubmit}
+            disabled={isLoading}
           >
-            <span aria-hidden>🎁</span>
-            <span>나를 위한 선물 보러가기/저장 →</span>
+            {isLoading ? (
+              <span>저장 중...</span>
+            ) : (
+              <>
+                <span>저장하고</span>
+                <span className="-mt-0.5">
+                  <span aria-hidden>🎁</span> 나를 위한 선물 보러가기 →
+                </span>
+              </>
+            )}
           </PrimaryPillButton>
 
           <p className="text-center text-[12px] text-[#795549]/70 mt-2">

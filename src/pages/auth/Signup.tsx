@@ -147,7 +147,7 @@ function SignupPage() {
         sessionStorage.removeItem("socialSignupData");
 
         alert("회원가입이 완료되었습니다!");
-        navigate("/");
+        navigate("/growth");
       } else {
         // 일반 회원가입
         await signup({

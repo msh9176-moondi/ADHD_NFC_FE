@@ -11,7 +11,7 @@ const ROUTINES = [
   '장소나 분위기에 따라 완전히 다른 사람이 된다',
 ] as const;
 
-type RoutineText = (typeof ROUTINES)[number];
+// type RoutineText = (typeof ROUTINES)[number];
 
 // ✅ 문장 -> 라우트 매핑
 const ROUTE_BY_TEXT: Record<(typeof ROUTINES)[number], string> = {

@@ -18,7 +18,7 @@ function RootLayout() {
 
         {/* 메인 영역 */}
         <div className="min-h-screen flex flex-col items-center">
-          <div className="w-[412px] max-w-full flex flex-col flex-1">
+          <div className="w-103 max-w-full flex flex-col flex-1">
             <AppHeader />
 
             <main className="flex-1 w-full flex flex-col">

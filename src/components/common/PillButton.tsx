@@ -9,7 +9,7 @@ export function PrimaryPillButton({ className, ...props }: PillButtonProps) {
   return (
     <Button
       className={cn(
-        "h-11 rounded-full text-white font-medium bg-[#795549] hover:bg-[#795549]/90",
+        "h-11 rounded-full text-white font-medium bg-[#795549] hover:bg-[#795549]/90 cursor-pointer",
         className,
       )}
       {...props}
