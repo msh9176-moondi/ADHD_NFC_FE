@@ -41,13 +41,16 @@ export const useTraitsStore = create<TraitsState>((set, get) => ({
   fetchTraits: async () => {
     set({ isLoading: true });
     try {
+      console.log('[Traits Store] fetchTraits 호출');
       const response = await api.get<TraitScoreResponse>('/traits');
+      console.log('[Traits Store] API 응답:', response.data);
       set({
         scores: response.data.traitScore,
         hasFetched: true,
       });
+      console.log('[Traits Store] 스토어 업데이트 완료:', response.data.traitScore);
     } catch (error) {
-      console.error('성향 점수 로드 실패:', error);
+      console.error('[Traits Store] 성향 점수 로드 실패:', error);
       set({ hasFetched: true });
     } finally {
       set({ isLoading: false });
@@ -57,10 +60,13 @@ export const useTraitsStore = create<TraitsState>((set, get) => ({
   updateTraits: async (scores: Partial<TraitScores>) => {
     set({ isLoading: true });
     try {
+      console.log('[Traits Store] updateTraits 호출:', scores);
       const response = await api.put<TraitScoreResponse>('/traits', scores);
+      console.log('[Traits Store] 저장 응답:', response.data);
       set({ scores: response.data.traitScore });
+      console.log('[Traits Store] 스토어 업데이트 완료');
     } catch (error) {
-      console.error('성향 점수 저장 실패:', error);
+      console.error('[Traits Store] 성향 점수 저장 실패:', error);
       throw error;
     } finally {
       set({ isLoading: false });

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrimaryPillButton } from '@/components/common/PillButton';
-import { useMoodStore, useRoutineStore, useReportStore } from '@/store';
+import { useReportStore, useGrowthStore, useProgressStore } from '@/store';
 
 type MoodKey = 'excited' | 'calm' | 'sleepy' | 'tired' | 'angry';
 
@@ -32,7 +32,11 @@ const SCALE_LABELS = [
 
 function ReportPage() {
   const navigate = useNavigate();
-  const { addCompletions } = useRoutineStore();
+
+  // 백엔드 스토어
+  const { saveDailyLog, isLoading } = useReportStore();
+  const { fetchAll: refreshGrowthData } = useGrowthStore();
+  const { syncFromBackend: refreshTreeData } = useProgressStore();
 
   const todayText = useMemo(() => {
     const d = new Date();
@@ -50,8 +54,6 @@ function ReportPage() {
   const [note, setNote] = useState('');
 
   const card = 'bg-white rounded-xl shadow-sm';
-  const { addMoodLog } = useMoodStore();
-  const { saveDailyLog, isLoading } = useReportStore();
 
   const handleSubmit = async () => {
     // ✅ 체크된 루틴 id 추출
@@ -59,25 +61,31 @@ function ReportPage() {
       checked[idx] ? r.id : null,
     ).filter(Boolean) as string[];
 
+    console.log('[Report] 저장 시작:', {
+      mood,
+      routineScore,
+      completedRoutineIds,
+    });
+
     try {
       // 1) 백엔드에 일일 리포트 저장
-      await saveDailyLog({
+      const savedLog = await saveDailyLog({
         mood,
         routineScore,
         completedRoutines: completedRoutineIds,
         note: note || undefined,
       });
+      console.log('[Report] 저장 완료:', savedLog);
 
-      // 2) 로컬 상태도 업데이트 (프로필 그래프용)
-      addMoodLog(mood);
-
-      // 3) 누적 저장(랭킹용)
-      addCompletions(completedRoutineIds);
+      // 2) 백엔드 데이터 리프레시 (Growth, Profile 탭에 반영)
+      console.log('[Report] 데이터 리프레시 시작');
+      await Promise.all([refreshGrowthData(), refreshTreeData()]);
+      console.log('[Report] 데이터 리프레시 완료');
 
       // 다음 페이지 이동
       navigate('/market');
     } catch (error) {
-      console.error('리포트 저장 실패:', error);
+      console.error('[Report] 리포트 저장 실패:', error);
       alert('저장에 실패했습니다. 다시 시도해주세요.');
     }
   };

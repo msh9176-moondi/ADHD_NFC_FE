@@ -28,3 +28,7 @@ export function hasAnyTraitScore() {
   const s = readTraitScores();
   return Object.values(s).some((v) => typeof v === 'number');
 }
+
+export function clearTraitScores() {
+  localStorage.removeItem(STORAGE_KEY);
+}

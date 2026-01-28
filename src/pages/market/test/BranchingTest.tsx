@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrimaryPillButton } from '@/components/common/PillButton';
+import { clearTraitScores } from '@/utils/traitScore';
 
 const ROUTINES = [
   '해야 할 건 많은데, 어디서부터 손대야 할지 모르겠다',
@@ -27,7 +28,7 @@ const ROUTE_BY_TEXT: Record<(typeof ROUTINES)[number], string> = {
   '하고 싶은데 몸에 시동이 안걸린다': '/market/test/branchingtest/motivation',
 
   '장소나 분위기에 따라 완전히 다른 사람이 된다':
-    '/market/test/branchingtest/enviromnet',
+    '/market/test/branchingtest/environment',
 };
 
 function BranchingTestPage() {
@@ -65,6 +66,9 @@ function BranchingTestPage() {
 
   function goNext() {
     if (pickedOrder.length === 0) return;
+
+    // 새 테스트 시작 전 이전 점수 초기화
+    clearTraitScores();
 
     // 선택 순서대로 라우트 큐 생성
     const queue = pickedOrder.map((i) => ROUTE_BY_TEXT[ROUTINES[i]]);

@@ -76,10 +76,11 @@ function MarketPage() {
   const navigate = useNavigate();
   const { scores, hasAnyScore, fetchTraits } = useTraitsStore();
 
-  // 페이지 로드 시 성향 점수 가져오기
+  // 페이지 로드 시 성향 점수 가져오기 (항상 최신 데이터 fetch)
   useEffect(() => {
+    console.log('[Market] 페이지 마운트 - fetchTraits 호출');
     fetchTraits();
-  }, [fetchTraits]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const taken = hasAnyScore();
   const topTrait = useMemo<TraitKey | null>(() => {
