@@ -85,7 +85,7 @@ function NaverCallbackPage() {
           const { accessToken, user } = response.data;
           if (accessToken && user) {
             useAuthStore.getState().setAuth(accessToken, user);
-            navigate("/");
+            navigate("/growth");
           }
         }
       } catch (err: any) {
@@ -126,7 +126,7 @@ function NaverCallbackPage() {
 
       const { accessToken, user } = response.data;
       useAuthStore.getState().setAuth(accessToken, user);
-      navigate("/");
+      navigate("/growth");
     } catch (err: any) {
       console.error("회원가입 에러:", err);
       setError(err.response?.data?.message || "회원가입에 실패했습니다.");

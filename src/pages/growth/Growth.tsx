@@ -1,42 +1,42 @@
-import { useMemo } from 'react';
-import { PrimaryPillButton } from '@/components/common/PillButton';
-import XpBar from '@/components/common/XpBar';
-import { useProgressStore } from '@/store/progress';
-import { useRoutineStore } from '@/store/routines';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo } from "react";
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import XpBar from "@/components/common/XpBar";
+import { useProgressStore } from "@/store/progress";
+import { useGrowthStore } from "@/store/growth";
+import { useNavigate } from "react-router-dom";
 
 const GROWTH_STAGES = [
   {
     minLevel: 1,
-    asset: '/assets/seed/seed-1.svg',
-    text: '씨앗이 자라고 있어요!!',
+    asset: "/assets/seed/seed-1.svg",
+    text: "씨앗이 자라고 있어요!!",
   },
-  { minLevel: 2, asset: '/assets/seed/seed-2.svg', text: '씨앗이 돋아났어요!' },
+  { minLevel: 2, asset: "/assets/seed/seed-2.svg", text: "씨앗이 돋아났어요!" },
   {
     minLevel: 3,
-    asset: '/assets/seed/seed-3.svg',
-    text: '새싹이 자라고 있어요!!',
+    asset: "/assets/seed/seed-3.svg",
+    text: "새싹이 자라고 있어요!!",
   },
-  { minLevel: 4, asset: '/assets/seed/seed-4.svg', text: '잎이 무성해졌어요!' },
+  { minLevel: 4, asset: "/assets/seed/seed-4.svg", text: "잎이 무성해졌어요!" },
   {
     minLevel: 5,
-    asset: '/assets/seed/seed-5.svg',
-    text: '작은 나무가 되었어요!',
+    asset: "/assets/seed/seed-5.svg",
+    text: "작은 나무가 되었어요!",
   },
   {
     minLevel: 6,
-    asset: '/assets/seed/seed-6.svg',
-    text: '나무가 자라고 있어요!',
+    asset: "/assets/seed/seed-6.svg",
+    text: "나무가 자라고 있어요!",
   },
   {
     minLevel: 7,
-    asset: '/assets/seed/seed-7.svg',
-    text: '큰 나무가 되었어요!',
+    asset: "/assets/seed/seed-7.svg",
+    text: "큰 나무가 되었어요!",
   },
   {
     minLevel: 8,
-    asset: '/assets/seed/seed-8.svg',
-    text: '나무에 열매가 맺혔어요!',
+    asset: "/assets/seed/seed-8.svg",
+    text: "나무에 열매가 맺혔어요!",
   },
 ] as const;
 
@@ -49,57 +49,73 @@ function getGrowthStage(level: number) {
 
 const ROUTINES_META = [
   {
-    id: 'water',
-    title: '물 마시기',
-    subtitle: '몸에게 주는 작은 선물',
-    emoji: '💧',
+    id: "water",
+    title: "물 마시기",
+    subtitle: "몸에게 주는 작은 선물",
+    emoji: "💧",
   },
   {
-    id: 'clean',
-    title: '청소하기',
-    subtitle: '마음도 함께 정돈돼요',
-    emoji: '🧹',
+    id: "clean",
+    title: "청소하기",
+    subtitle: "마음도 함께 정돈돼요",
+    emoji: "🧹",
   },
-  { id: 'walk', title: '걷기', subtitle: '생각이 맑아지는 시간', emoji: '🚶' },
+  { id: "walk", title: "걷기", subtitle: "생각이 맑아지는 시간", emoji: "🚶" },
   {
-    id: 'meditate',
-    title: '명상하기',
-    subtitle: '잠시 멈춤의 여유',
-    emoji: '🧘',
+    id: "meditate",
+    title: "명상하기",
+    subtitle: "잠시 멈춤의 여유",
+    emoji: "🧘",
   },
   {
-    id: 'plan',
-    title: '계획 세우기',
-    subtitle: '내일을 위한 준비',
-    emoji: '📝',
+    id: "plan",
+    title: "계획 세우기",
+    subtitle: "내일을 위한 준비",
+    emoji: "📝",
   },
 ] as const;
 
 function GrowthPage() {
-  const progress = useProgressStore() as any;
-  const level = progress.level as number;
-  const xp = progress.xp as number;
-  const xpToNext = progress.xpToNext as number;
-
-  const streak = (progress.streak ?? 0) as number;
-  const badges = (progress.badges ?? 0) as number;
-  const rank = (progress.rank ?? 0) as number;
-
-  const { counts } = useRoutineStore();
   const navigate = useNavigate();
+
+  // 나무 데이터 (progress 스토어)
+  const { level, xp, xpToNext, syncFromBackend, isLoading: treeLoading } = useProgressStore();
+
+  // 통계 데이터 (growth 스토어)
+  const {
+    routineRanking: apiRoutineRanking,
+    totalExecutions,
+    currentStreak,
+    totalDays,
+    isLoading: statsLoading,
+    fetchAll: fetchStats,
+  } = useGrowthStore();
+
+  // 페이지 로드 시 데이터 가져오기
+  useEffect(() => {
+    syncFromBackend();
+    fetchStats();
+  }, [syncFromBackend, fetchStats]);
+
   const growth = getGrowthStage(level);
+  const cardClass = "bg-white rounded-xl shadow-sm";
+  const isLoading = treeLoading || statsLoading;
 
-  const cardClass = 'bg-white rounded-xl shadow-sm';
-
+  // 백엔드 루틴 랭킹을 ROUTINES_META와 매핑
   const routineRanking = useMemo(() => {
-    return ROUTINES_META.map((r) => ({ ...r, count: counts[r.id] ?? 0 })).sort(
-      (a, b) => b.count - a.count,
-    );
-  }, [counts]);
+    return ROUTINES_META.map((r) => {
+      const apiData = apiRoutineRanking.find((ar) => ar.routineId === r.id);
+      return { ...r, count: apiData?.count ?? 0 };
+    }).sort((a, b) => b.count - a.count);
+  }, [apiRoutineRanking]);
 
-  const totalExecutions = useMemo(() => {
-    return Object.values(counts).reduce((sum, v) => sum + (v ?? 0), 0);
-  }, [counts]);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-[#795549]">로딩 중...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col justify-center py-0">
@@ -186,7 +202,7 @@ function GrowthPage() {
                 🔥
               </div>
               <div className="text-[20px] font-bold text-[#795549]">
-                {streak}
+                {currentStreak}
               </div>
               <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
                 연속 실행
@@ -195,29 +211,29 @@ function GrowthPage() {
 
             <div className="bg-[#F5F0E5] rounded-2xl p-5 text-center">
               <div className="text-[28px] mb-2" aria-hidden>
-                👑
+                📅
               </div>
               <div className="text-[20px] font-bold text-[#795549]">
-                {badges}
+                {totalDays}
               </div>
               <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-                획득 뱃지
+                기록 일수
               </div>
             </div>
 
             <div className="bg-[#F5F0E5] rounded-2xl p-5 text-center">
               <div className="text-[28px] mb-2" aria-hidden>
-                🏆
+                🌳
               </div>
-              <div className="text-[20px] font-bold text-[#795549]">{rank}</div>
+              <div className="text-[20px] font-bold text-[#795549]">{level}</div>
               <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-                랭킹
+                나무 레벨
               </div>
             </div>
           </div>
         </section>
 
-        {/* ✅ 구분선 + 문구 섹션 */}
+        {/* 구분선 + 문구 섹션 */}
         <section className="w-full max-w-md mx-auto">
           <div className="border-t border-[#DBA67A]/60 pt-6 text-center">
             <h4 className="text-[14px] font-semibold text-[#795549]">
@@ -233,7 +249,7 @@ function GrowthPage() {
         <section className="w-full mt-2 max-w-md mx-auto">
           <PrimaryPillButton
             className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
-            onClick={() => navigate('/report')}
+            onClick={() => navigate("/report")}
           >
             <span aria-hidden>✏️</span>
             <span>기록하러 가기 →</span>

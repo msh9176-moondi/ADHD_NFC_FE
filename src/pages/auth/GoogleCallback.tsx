@@ -46,7 +46,7 @@ function GoogleCallbackPage() {
           const { accessToken, user } = response.data;
           useAuthStore.getState().setAuth(accessToken, user);
           alert("구글 로그인 성공!");
-          navigate("/");
+          navigate("/growth");
         }
       } catch (err: any) {
         console.error("구글 로그인 에러:", err);
