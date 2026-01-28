@@ -6,9 +6,9 @@ export default function SplashPage() {
 
   return (
     // RootLayout의 main이 이미 flex-1이므로, 여기서는 100vh 잡지 말고 flex-1로만
-    <div className="flex-1 w-full flex flex-col items-center bg-[#F5F1EB] my-40">
+    <div className="flex-1 w-full min-h-screen flex flex-col items-center bg-[#F5F1EB]">
       {/* 콘텐츠 폭: RootLayout이 w-103을 쓰고 있어서 여기서도 비슷하게 맞추면 안정적 */}
-      <div className="w-full max-w-[412px] flex-1 flex flex-col px-8">
+      <div className="w-full flex-1 flex flex-col px-8">
         {/* 로고: header 바로 아래에서 자연스럽게 중앙 정렬 */}
         <div className="flex-1 flex items-center justify-center">
           <img
