@@ -1,42 +1,42 @@
-import { useEffect, useMemo } from "react";
-import { PrimaryPillButton } from "@/components/common/PillButton";
-import XpBar from "@/components/common/XpBar";
-import { useProgressStore } from "@/store/progress";
-import { useGrowthStore } from "@/store/growth";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo } from 'react';
+import { PrimaryPillButton } from '@/components/common/PillButton';
+import XpBar from '@/components/common/XpBar';
+import { useProgressStore } from '@/store/progress';
+import { useGrowthStore } from '@/store/growth';
+import { useNavigate } from 'react-router-dom';
 
 const GROWTH_STAGES = [
   {
     minLevel: 1,
-    asset: "/assets/seed/seed-1.svg",
-    text: "씨앗이 자라고 있어요!!",
+    asset: '/assets/seed/seed-1.svg',
+    text: '씨앗이 자라고 있어요!!',
   },
-  { minLevel: 2, asset: "/assets/seed/seed-2.svg", text: "씨앗이 돋아났어요!" },
+  { minLevel: 2, asset: '/assets/seed/seed-2.svg', text: '씨앗이 돋아났어요!' },
   {
     minLevel: 3,
-    asset: "/assets/seed/seed-3.svg",
-    text: "새싹이 자라고 있어요!!",
+    asset: '/assets/seed/seed-3.svg',
+    text: '새싹이 자라고 있어요!!',
   },
-  { minLevel: 4, asset: "/assets/seed/seed-4.svg", text: "잎이 무성해졌어요!" },
+  { minLevel: 4, asset: '/assets/seed/seed-4.svg', text: '잎이 무성해졌어요!' },
   {
     minLevel: 5,
-    asset: "/assets/seed/seed-5.svg",
-    text: "작은 나무가 되었어요!",
+    asset: '/assets/seed/seed-5.svg',
+    text: '작은 나무가 되었어요!',
   },
   {
     minLevel: 6,
-    asset: "/assets/seed/seed-6.svg",
-    text: "나무가 자라고 있어요!",
+    asset: '/assets/seed/seed-6.svg',
+    text: '나무가 자라고 있어요!',
   },
   {
     minLevel: 7,
-    asset: "/assets/seed/seed-7.svg",
-    text: "큰 나무가 되었어요!",
+    asset: '/assets/seed/seed-7.svg',
+    text: '큰 나무가 되었어요!',
   },
   {
     minLevel: 8,
-    asset: "/assets/seed/seed-8.svg",
-    text: "나무에 열매가 맺혔어요!",
+    asset: '/assets/seed/seed-8.svg',
+    text: '나무에 열매가 맺혔어요!',
   },
 ] as const;
 
@@ -49,29 +49,29 @@ function getGrowthStage(level: number) {
 
 const ROUTINES_META = [
   {
-    id: "water",
-    title: "물 마시기",
-    subtitle: "몸에게 주는 작은 선물",
-    emoji: "💧",
+    id: 'water',
+    title: '물 마시기',
+    subtitle: '몸에게 주는 작은 선물',
+    emoji: '💧',
   },
   {
-    id: "clean",
-    title: "청소하기",
-    subtitle: "마음도 함께 정돈돼요",
-    emoji: "🧹",
+    id: 'clean',
+    title: '청소하기',
+    subtitle: '마음도 함께 정돈돼요',
+    emoji: '🧹',
   },
-  { id: "walk", title: "걷기", subtitle: "생각이 맑아지는 시간", emoji: "🚶" },
+  { id: 'walk', title: '걷기', subtitle: '생각이 맑아지는 시간', emoji: '🚶' },
   {
-    id: "meditate",
-    title: "명상하기",
-    subtitle: "잠시 멈춤의 여유",
-    emoji: "🧘",
+    id: 'meditate',
+    title: '명상하기',
+    subtitle: '잠시 멈춤의 여유',
+    emoji: '🧘',
   },
   {
-    id: "plan",
-    title: "계획 세우기",
-    subtitle: "내일을 위한 준비",
-    emoji: "📝",
+    id: 'plan',
+    title: '계획 세우기',
+    subtitle: '내일을 위한 준비',
+    emoji: '📝',
   },
 ] as const;
 
@@ -79,7 +79,13 @@ function GrowthPage() {
   const navigate = useNavigate();
 
   // 나무 데이터 (progress 스토어)
-  const { level, xp, xpToNext, syncFromBackend, isLoading: treeLoading } = useProgressStore();
+  const {
+    level,
+    xp,
+    xpToNext,
+    syncFromBackend,
+    isLoading: treeLoading,
+  } = useProgressStore();
 
   // 통계 데이터 (growth 스토어)
   const {
@@ -98,7 +104,7 @@ function GrowthPage() {
   }, [syncFromBackend, fetchStats]);
 
   const growth = getGrowthStage(level);
-  const cardClass = "bg-white rounded-xl shadow-sm";
+  const cardClass = 'bg-white rounded-xl shadow-sm';
   const isLoading = treeLoading || statsLoading;
 
   // 백엔드 루틴 랭킹을 ROUTINES_META와 매핑
@@ -118,11 +124,11 @@ function GrowthPage() {
   }
 
   return (
-    <div className="flex flex-col justify-center py-0">
+    <div className="flex flex-col justify-center mt-18">
       <div className="flex flex-col gap-10">
         {/* 성장 영역 */}
         <div
-          className={`flex flex-col items-center justify-center gap-4 w-full max-w-md mx-auto ${cardClass} px-6 py-6`}
+          className={`flex flex-col items-center justify-center gap-4 w-full max-w-md mx-auto w-fll`}
         >
           <div className="text-center">
             <h2 className="text-[14px] font-semibold text-[#795549] mb-1">
@@ -225,7 +231,9 @@ function GrowthPage() {
               <div className="text-[28px] mb-2" aria-hidden>
                 🌳
               </div>
-              <div className="text-[20px] font-bold text-[#795549]">{level}</div>
+              <div className="text-[20px] font-bold text-[#795549]">
+                {level}
+              </div>
               <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
                 나무 레벨
               </div>
@@ -249,10 +257,10 @@ function GrowthPage() {
         <section className="w-full mt-2 max-w-md mx-auto">
           <PrimaryPillButton
             className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
-            onClick={() => navigate("/report")}
+            onClick={() => navigate('/profile')}
           >
             <span aria-hidden>✏️</span>
-            <span>기록하러 가기 →</span>
+            <span>프로필 →</span>
           </PrimaryPillButton>
 
           <p className="text-center text-[12px] text-[#795549]/70 mt-2">

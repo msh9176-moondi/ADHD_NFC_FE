@@ -1,10 +1,23 @@
 // RootLayout.tsx
 import { Advertisement, AppFooter, AppHeader } from '@/components/common';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+
+// F5F0E5 배경을 사용하는 페이지 경로
+const CREAM_BG_PATHS = ['/reward', '/report', '/market'];
 
 function RootLayout() {
+  const location = useLocation();
+
+  // 현재 경로가 크림색 배경 페이지인지 확인
+  const isCreamBg = CREAM_BG_PATHS.some(
+    (path) =>
+      location.pathname === path || location.pathname.startsWith(path + '/'),
+  );
+
+  const bgColor = isCreamBg ? 'bg-[#F5F0E5]' : 'bg-white';
+
   return (
-    <div className="min-h-screen flex justify-center">
+    <div className={` min-h-screen flex justify-center ${bgColor} `}>
       {/* 광고 + 콘텐츠 묶음 */}
       <div className="flex gap-16">
         {/* 왼쪽 광고 - 콘텐츠와 함께 중앙 정렬, 세로 중앙 고정 */}
@@ -17,11 +30,11 @@ function RootLayout() {
         </aside>
 
         {/* 메인 영역 */}
-        <div className="min-h-screen flex flex-col items-center">
+        <div className={`min-h-screen flex flex-col items-center ${bgColor}`}>
           <div className="w-103 max-w-full flex flex-col flex-1">
             <AppHeader />
 
-            <main className="flex-1 w-full flex flex-col">
+            <main className="flex-1 w-full flex flex-col ">
               <Outlet />
             </main>
 

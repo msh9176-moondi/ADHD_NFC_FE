@@ -1,17 +1,17 @@
-import { ProductCard } from "@/components/common";
-import { PrimaryPillButton } from "@/components/common/PillButton";
-import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo } from "react";
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
+import { ProductCard } from '@/components/common';
+import { PrimaryPillButton } from '@/components/common/PillButton';
+import { Card } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart";
-import { useProgressStore } from "@/store/progress";
-import { useTraitsStore, type TraitKey } from "@/store/traits";
+} from '@/components/ui/chart';
+import { useProgressStore } from '@/store/progress';
+import { useTraitsStore, type TraitKey } from '@/store/traits';
 
 type Recommended = {
   title: string;
@@ -22,39 +22,39 @@ type Recommended = {
 
 const RECOMMENDED_BY_TRAIT: Record<TraitKey, Recommended> = {
   attention: {
-    title: "타이머",
-    desc: "시간 감각을 잡아줘요",
-    imageSrc: "/assets/items/timer.png",
+    title: '타이머',
+    desc: '시간 감각을 잡아줘요',
+    imageSrc: '/assets/items/timer.png',
   },
   impulsive: {
-    title: "밸런스 보드",
-    desc: "몸을 쓰면 충동이 가라앉아요",
-    imageSrc: "/assets/items/balance-board.png", // 없으면 아이콘/다른 이미지로 교체
+    title: '밸런스 보드',
+    desc: '몸을 쓰면 충동이 가라앉아요',
+    imageSrc: '/assets/items/balance-board.png', // 없으면 아이콘/다른 이미지로 교체
   },
   complex: {
-    title: "ADHD 플래너",
-    desc: "컨디션 기복을 구조로 받쳐줘요",
-    imageSrc: "/assets/items/planner.png",
+    title: 'ADHD 플래너',
+    desc: '컨디션 기복을 구조로 받쳐줘요',
+    imageSrc: '/assets/items/planner.png',
   },
   emotional: {
-    title: "스트레스 볼",
-    desc: "감정 폭발 전에 손으로 진정",
-    imageSrc: "/assets/items/stress-ball.png",
+    title: '스트레스 볼',
+    desc: '감정 폭발 전에 손으로 진정',
+    imageSrc: '/assets/items/stress-ball.png',
   },
   motivation: {
-    title: "알람 약통",
-    desc: "미루는 날에도 “시작”을 걸어줘요",
-    imageSrc: "/assets/items/pill.png",
+    title: '알람 약통',
+    desc: '미루는 날에도 “시작”을 걸어줘요',
+    imageSrc: '/assets/items/pill.png',
   },
   environment: {
-    title: "집중 환경 키트",
-    desc: "환경 세팅이 실행을 당겨줘요",
-    imageSrc: "/assets/items/environment.png",
+    title: '집중 환경 키트',
+    desc: '환경 세팅이 실행을 당겨줘요',
+    imageSrc: '/assets/items/environment.png',
   },
 };
 
 const chartConfig = {
-  score: { label: "Score", color: "var(--chart-1)" },
+  score: { label: 'Score', color: 'var(--chart-1)' },
 } satisfies ChartConfig;
 
 function QuestionHexagon() {
@@ -86,12 +86,12 @@ function MarketPage() {
     if (!taken || !scores) return null;
 
     const entries: Array<[TraitKey, number]> = [
-      ["attention", scores.attention ?? 0],
-      ["impulsive", scores.impulsive ?? 0],
-      ["complex", scores.complex ?? 0],
-      ["emotional", scores.emotional ?? 0],
-      ["motivation", scores.motivation ?? 0],
-      ["environment", scores.environment ?? 0],
+      ['attention', scores.attention ?? 0],
+      ['impulsive', scores.impulsive ?? 0],
+      ['complex', scores.complex ?? 0],
+      ['emotional', scores.emotional ?? 0],
+      ['motivation', scores.motivation ?? 0],
+      ['environment', scores.environment ?? 0],
     ];
 
     const max = Math.max(...entries.map(([, v]) => v));
@@ -103,47 +103,47 @@ function MarketPage() {
   const chartData = useMemo(() => {
     // Recharts RadarChart는 data 배열 + dataKey 사용
     return [
-      { axis: "집중", score: scores?.attention ?? 0 },
-      { axis: "충동", score: scores?.impulsive ?? 0 },
-      { axis: "복합", score: scores?.complex ?? 0 },
-      { axis: "감정", score: scores?.emotional ?? 0 },
-      { axis: "동기", score: scores?.motivation ?? 0 },
-      { axis: "환경", score: scores?.environment ?? 0 },
+      { axis: '집중', score: scores?.attention ?? 0 },
+      { axis: '충동', score: scores?.impulsive ?? 0 },
+      { axis: '복합', score: scores?.complex ?? 0 },
+      { axis: '감정', score: scores?.emotional ?? 0 },
+      { axis: '동기', score: scores?.motivation ?? 0 },
+      { axis: '환경', score: scores?.environment ?? 0 },
     ];
   }, [scores]);
 
   const TRAIT_DESC: Record<TraitKey, [string, string]> = {
-    attention: ["머리는 준비됐는데,", "시작 버튼이 안 눌리는 타입이에요."],
+    attention: ['머리는 준비됐는데,', '시작 버튼이 안 눌리는 타입이에요.'],
     impulsive: [
-      "반응이 먼저 나와요.",
-      "흥분하면 속도 조절이 어려울 수 있어요.",
+      '반응이 먼저 나와요.',
+      '흥분하면 속도 조절이 어려울 수 있어요.',
     ],
-    complex: ["날마다 컨디션이 달라요.", "잘될 때,안될 때 기복이 커요."],
-    emotional: ["작은 자극에도 흔들려요.", "회복까지 시간이 걸릴 수 있어요."],
+    complex: ['날마다 컨디션이 달라요.', '잘될 때,안될 때 기복이 커요.'],
+    emotional: ['작은 자극에도 흔들려요.', '회복까지 시간이 걸릴 수 있어요.'],
     motivation: [
-      "중요한 걸 알아도 시동이 늦어요.",
-      "외부 압박이 트리거가 돼요.",
+      '중요한 걸 알아도 시동이 늦어요.',
+      '외부 압박이 트리거가 돼요.',
     ],
     environment: [
-      "환경에 따라 성능이 바뀌어요.",
-      "집에서는 특히 막힐 수 있어요.",
+      '환경에 따라 성능이 바뀌어요.',
+      '집에서는 특히 막힐 수 있어요.',
     ],
   };
 
   const topTraitLines = useMemo(() => {
     if (!taken || !scores)
       return [
-        "당신의 패턴을 요약해서",
+        '당신의 패턴을 요약해서',
         '"지금 필요한 도구"를 추천해요.',
       ] as const;
 
     const entries: Array<[TraitKey, number]> = [
-      ["attention", scores.attention ?? 0],
-      ["impulsive", scores.impulsive ?? 0],
-      ["complex", scores.complex ?? 0],
-      ["emotional", scores.emotional ?? 0],
-      ["motivation", scores.motivation ?? 0],
-      ["environment", scores.environment ?? 0],
+      ['attention', scores.attention ?? 0],
+      ['impulsive', scores.impulsive ?? 0],
+      ['complex', scores.complex ?? 0],
+      ['emotional', scores.emotional ?? 0],
+      ['motivation', scores.motivation ?? 0],
+      ['environment', scores.environment ?? 0],
     ];
 
     const max = Math.max(...entries.map(([, v]) => v));
@@ -151,15 +151,15 @@ function MarketPage() {
 
     if (!top || max <= 0)
       return [
-        "테스트 결과를 기반으로",
-        "“지금 필요한 도구”를 추천해요.",
+        '테스트 결과를 기반으로',
+        '“지금 필요한 도구”를 추천해요.',
       ] as const;
 
     return TRAIT_DESC[top];
   }, [taken, scores]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full">
+    <div className="flex flex-col items-center justify-center w-full mt-12">
       {/* 메인 타이틀 */}
       <section className="relative flex flex-col items-center justify-center w-full">
         {/* 코인 칩 */}
@@ -184,44 +184,44 @@ function MarketPage() {
           <ProductCard
             title="체험단 전용 특전"
             imageSrc="/assets/items/gift.png"
-            desc={"체험단 얼리버드 구매 특전: 추가 구성 증정"}
+            desc={'체험단 얼리버드 구매 특전: 추가 구성 증정'}
             price={105}
-            onBuy={() => navigate("/market/order/cartpage")}
+            onBuy={() => navigate('/market/order/cartpage')}
           />
 
           <ProductCard
             title="물뿌리개"
             imageSrc="/assets/items/watering-can.png"
-            desc={"나무 성장 XP를\n더 빨리 올려줘요"}
+            desc={'나무 성장 XP를\n더 빨리 올려줘요'}
             price={15}
-            onBuy={() => navigate("/market/order/cartpage")}
+            onBuy={() => navigate('/market/order/cartpage')}
           />
 
           <ProductCard
             title="전문가 상담권"
             imageSrc="/assets/items/ticket.png"
-            desc={"(준비중) 전문가 상담 서비스"}
+            desc={'(준비중) 전문가 상담 서비스'}
             isComingSoon
           />
 
           <ProductCard
             title="커피 기프티콘"
             imageSrc="/assets/items/coffee.png"
-            desc={"(준비중) 나에게 주는 음료 한 잔"}
+            desc={'(준비중) 나에게 주는 음료 한 잔'}
             isComingSoon
           />
 
           <ProductCard
             title="타이머"
             imageSrc="/assets/items/timer.png"
-            desc={"(준비중) 집중력 향상을 위한\n시간 관리 도구"}
+            desc={'(준비중) 집중력 향상을 위한\n시간 관리 도구'}
             isComingSoon
           />
 
           <ProductCard
             title="알람 약통"
             imageSrc="/assets/items/pill.png"
-            desc={"(준비중) 약 복용을\n절대 놓치지 않게"}
+            desc={'(준비중) 약 복용을\n절대 놓치지 않게'}
             isComingSoon
           />
 
@@ -289,7 +289,7 @@ function MarketPage() {
 
                 {/* 버튼 영역: 육각형 바로 아래 배치 */}
                 <button
-                  onClick={() => navigate("/market/test/branchingtest")}
+                  onClick={() => navigate('/market/test/branchingtest')}
                   className="w-full text-center"
                   type="button"
                 >
@@ -306,9 +306,9 @@ function MarketPage() {
               <div className="flex-1">
                 <div
                   className={[
-                    "text-[12px] leading-relaxed text-[#795549]/70 space-y-2",
-                    !taken ? "blur-[6px] select-none" : "",
-                  ].join(" ")}
+                    'text-[12px] leading-relaxed text-[#795549]/70 space-y-2',
+                    !taken ? 'blur-[6px] select-none' : '',
+                  ].join(' ')}
                 >
                   <div className="space-y-1">
                     {topTraitLines.map((line, i) => (
@@ -360,7 +360,7 @@ function MarketPage() {
                     {/* 버튼: 카드 하단 고정 (여백 깔끔) */}
                     <button
                       type="button"
-                      onClick={() => navigate("/market/order/cartpage")}
+                      onClick={() => navigate('/market/order/cartpage')}
                       className="absolute left-3 right-3 bottom-6 text-[12px] font-semibold text-[#795549]"
                     >
                       <div className="inline-block">
@@ -379,7 +379,7 @@ function MarketPage() {
       <section className="w-full mt-7">
         <PrimaryPillButton
           className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
-          onClick={() => navigate("/growth")}
+          onClick={() => navigate('/growth')}
         >
           <span aria-hidden>🌳</span>
           <span>나무 보러가기 →</span>

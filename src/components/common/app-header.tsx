@@ -1,17 +1,17 @@
-import { useNavigate } from "react-router";
+import { useNavigate } from 'react-router';
 
 function AppHeader() {
   const navigate = useNavigate();
   const handleLogoClick = () => {
-    navigate("/reward");
+    navigate('/reward');
   };
   return (
-    <header className="flex items-center justify-center p-14">
+    <header className="flex items-center justify-center pt-20">
       <div className="flex items-center justify-center">
         <img
-          src="/assets/sunglass.svg"
+          src="public\assets\logo_text.svg"
           alt="Sunglasses"
-          className="h-16 w-auto cursor-pointer"
+          className="h-32 w-auto cursor-pointer"
           onClick={handleLogoClick}
         />
       </div>
