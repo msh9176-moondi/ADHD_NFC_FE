@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { PrimaryPillButton } from '@/components/common/PillButton';
 import { useProgressStore, useRoutineStore, useMoodStore } from '@/store';
 import {
   PolarAngleAxis,
