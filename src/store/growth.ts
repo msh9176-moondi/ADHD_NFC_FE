@@ -55,32 +55,42 @@ export const useGrowthStore = create<GrowthState>((set, get) => ({
   // 통계 데이터 가져오기
   fetchStats: async () => {
     try {
+      console.log('[Growth Store] fetchStats 호출');
       const response = await api.get<DailyLogsStatsResponse>('/daily-logs/stats');
+      console.log('[Growth Store] API 응답 전체:', response.data);
       const { stats } = response.data;
+      console.log('[Growth Store] 통계 데이터 수신:', stats);
+      console.log('[Growth Store] routineRanking:', stats.routineRanking);
+      console.log('[Growth Store] totalExecutions:', stats.totalExecutions);
       set({
-        routineRanking: stats.routineRanking,
-        totalExecutions: stats.totalExecutions,
-        currentStreak: stats.currentStreak,
-        longestStreak: stats.longestStreak,
-        totalDays: stats.totalDays,
+        routineRanking: stats.routineRanking || [],
+        totalExecutions: stats.totalExecutions || 0,
+        currentStreak: stats.currentStreak || 0,
+        longestStreak: stats.longestStreak || 0,
+        totalDays: stats.totalDays || 0,
       });
+      console.log('[Growth Store] 스토어 업데이트 완료');
     } catch (error) {
-      console.error('통계 데이터 로드 실패:', error);
+      console.error('[Growth Store] 통계 데이터 로드 실패:', error);
     }
   },
 
   // 감정 기록 가져오기 (이번 달)
   fetchMoodLogs: async () => {
     try {
+      console.log('[Growth Store] fetchMoodLogs 호출');
       const response = await api.get<DailyLogsListResponse>('/daily-logs', {
         params: { limit: 31 },
       });
+      console.log('[Growth Store] 일일 로그 API 응답:', response.data);
       const { logs } = response.data;
-      set({
-        moodLogs: logs.map((log) => ({ date: log.date, mood: log.mood })),
-      });
+      console.log('[Growth Store] 감정 기록 수신:', logs);
+      const moodData = logs.map((log) => ({ date: log.date, mood: log.mood }));
+      console.log('[Growth Store] 매핑된 moodLogs:', moodData);
+      set({ moodLogs: moodData });
+      console.log('[Growth Store] moodLogs 스토어 업데이트 완료');
     } catch (error) {
-      console.error('감정 기록 로드 실패:', error);
+      console.error('[Growth Store] 감정 기록 로드 실패:', error);
     }
   },
 

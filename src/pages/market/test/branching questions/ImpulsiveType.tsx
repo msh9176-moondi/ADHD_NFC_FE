@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PrimaryPillButton } from '@/components/common/PillButton';
-import { writeTraitScore } from '@/utils/traitScore'; // ✅ 추가
+import { writeTraitScore, readTraitScores } from '@/utils/traitScore';
+import { useTraitsStore } from '@/store/traits';
+
 const ROUTINES = [
   '하고 나서 “아, 또 그랬다”는 생각이 든다',
   '가만히 있으라고 하면 몸이 더 불편해진다',
@@ -13,6 +15,7 @@ type BranchState = { queue?: string[] };
 function ImpulsiveTypePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { updateTraits } = useTraitsStore();
 
   const state = (location.state ?? {}) as BranchState;
   const queue = state.queue ?? [];
@@ -40,11 +43,24 @@ function ImpulsiveTypePage() {
     });
   }
 
-  function goNext() {
-    // ✅ 점수 저장: 체크된 개수(최대 3)
+  async function goNext() {
     const score = Object.values(checked).filter(Boolean).length;
     writeTraitScore('impulsive', score);
+
     if (queue.length === 0) {
+      const allScores = readTraitScores();
+      try {
+        await updateTraits({
+          attention: allScores.attention ?? 0,
+          impulsive: allScores.impulsive ?? 0,
+          complex: allScores.complex ?? 0,
+          emotional: allScores.emotional ?? 0,
+          motivation: allScores.motivation ?? 0,
+          environment: allScores.environment ?? 0,
+        });
+      } catch (error) {
+        console.error('성향 점수 저장 실패:', error);
+      }
       navigate('/market');
       return;
     }

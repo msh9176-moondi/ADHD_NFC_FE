@@ -1,6 +1,9 @@
-import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { useProgressStore, useRoutineStore, useMoodStore } from '@/store';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import { useProgressStore, useGrowthStore } from "@/store";
+import { useTraitsStore, type TraitKey } from "@/store/traits";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -11,66 +14,60 @@ import {
   XAxis,
   YAxis,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart';
-import {
-  hasAnyTraitScore,
-  readTraitScores,
-  type TraitKey,
-} from '@/utils/traitScore';
-import { useEffect, useMemo, useState } from 'react';
+} from "@/components/ui/chart";
 
 const ROUTINES_META = [
   {
-    id: 'water',
-    title: '물 마시기',
-    subtitle: '몸에게 주는 작은 선물',
-    emoji: '💧',
+    id: "water",
+    title: "물 마시기",
+    subtitle: "몸에게 주는 작은 선물",
+    emoji: "💧",
   },
   {
-    id: 'clean',
-    title: '청소하기',
-    subtitle: '마음도 함께 정돈돼요',
-    emoji: '🧹',
+    id: "clean",
+    title: "청소하기",
+    subtitle: "마음도 함께 정돈돼요",
+    emoji: "🧹",
   },
-  { id: 'walk', title: '걷기', subtitle: '생각이 맑아지는 시간', emoji: '🚶' },
+  { id: "walk", title: "걷기", subtitle: "생각이 맑아지는 시간", emoji: "🚶" },
   {
-    id: 'meditate',
-    title: '명상하기',
-    subtitle: '잠시 멈춤의 여유',
-    emoji: '🧘',
+    id: "meditate",
+    title: "명상하기",
+    subtitle: "잠시 멈춤의 여유",
+    emoji: "🧘",
   },
   {
-    id: 'plan',
-    title: '계획 세우기',
-    subtitle: '내일을 위한 준비',
-    emoji: '📝',
+    id: "plan",
+    title: "계획 세우기",
+    subtitle: "내일을 위한 준비",
+    emoji: "📝",
   },
 ] as const;
 
 const MOODS = [
-  { key: 'excited', label: '기쁨', emoji: '🤩' },
-  { key: 'calm', label: '평온', emoji: '😊' },
-  { key: 'sleepy', label: '피곤', emoji: '😴' },
-  { key: 'tired', label: '무기력', emoji: '😣' },
-  { key: 'angry', label: '짜증', emoji: '😡' },
+  { key: "excited", label: "기쁨", emoji: "🤩" },
+  { key: "calm", label: "평온", emoji: "😊" },
+  { key: "sleepy", label: "피곤", emoji: "😴" },
+  { key: "tired", label: "무기력", emoji: "😣" },
+  { key: "angry", label: "짜증", emoji: "😡" },
 ] as const;
 
 const chartConfig = {
-  score: { label: 'Score', color: 'var(--chart-1)' },
-  value: { label: 'Value', color: 'var(--chart-1)' },
+  score: { label: "Score", color: "var(--chart-1)" },
+  value: { label: "Value", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
 function ProfilePage() {
   const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('floca_avatar');
+    const saved = localStorage.getItem("floca_avatar");
     if (saved) setAvatar(saved);
   }, []);
 
@@ -79,57 +76,62 @@ function ProfilePage() {
     if (!file) return;
 
     // 이미지 파일만
-    if (!file.type.startsWith('image/')) return;
+    if (!file.type.startsWith("image/")) return;
 
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
       setAvatar(dataUrl);
-      localStorage.setItem('floca_avatar', dataUrl);
+      localStorage.setItem("floca_avatar", dataUrl);
     };
     reader.readAsDataURL(file);
   };
 
   const navigate = useNavigate();
 
-  // progress store (필드가 프로젝트마다 다를 수 있으니 안전 캐스팅)
-  const progress = useProgressStore() as any;
-  const level = (progress.level ?? 1) as number;
-  const xp = (progress.xp ?? 0) as number;
-  const xpToNext = (progress.xpToNext ?? 100) as number;
-  const xpTotal = (progress.xpTotal ?? progress.xp ?? 0) as number; // 없으면 xp로 대체
-  const dayCount = (progress.dayCount ?? 0) as number; // 없으면 0
+  // progress store (나무 레벨, XP)
+  const { level, xp: xpTotal, syncFromBackend: syncTree } = useProgressStore();
 
-  // routines
-  const { counts } = useRoutineStore();
-  const totalExecutions = useMemo(
-    () => Object.values(counts).reduce((sum, v) => sum + (v ?? 0), 0),
-    [counts],
-  );
+  // growth store (통계 데이터 - 백엔드 연동)
+  const {
+    routineRanking: apiRoutineRanking,
+    totalExecutions,
+    totalDays: dayCount,
+    moodLogs,
+    fetchAll: fetchStats,
+  } = useGrowthStore();
 
-  const routineRankingTop5 = useMemo(() => {
-    return ROUTINES_META.map((r) => ({ ...r, count: counts[r.id] ?? 0 }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  }, [counts]);
+  // 페이지 로드 시 백엔드에서 데이터 가져오기 (항상 최신 데이터 fetch)
+  useEffect(() => {
+    console.log("[Profile] 페이지 마운트 - 데이터 fetch 시작");
+    syncTree();
+    fetchStats();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const top4RoutinesForText = useMemo(() => {
-    return ROUTINES_META.map((r) => ({ ...r, count: counts[r.id] ?? 0 }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 4);
-  }, [counts]);
+  // 백엔드 루틴 랭킹을 ROUTINES_META와 매핑 (원래 순서 유지)
+  const routinesWithCount = useMemo(() => {
+    console.log("[Profile] apiRoutineRanking 데이터:", apiRoutineRanking);
+    const result = ROUTINES_META.map((r) => {
+      const apiData = apiRoutineRanking.find((ar) => ar.routineId === r.id);
+      return { ...r, count: apiData?.count ?? 0 };
+    });
+    console.log("[Profile] 루틴 실행 현황:", result);
+    return result;
+  }, [apiRoutineRanking]);
 
-  // mood logs (이번 달)
-  const { logs } = useMoodStore();
+  // mood logs (이번 달) - 백엔드 데이터 사용
   const moodStats = useMemo(() => {
+    console.log("[Profile] moodLogs 데이터:", moodLogs);
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
 
-    const monthLogs = logs.filter((l) => {
+    const monthLogs = moodLogs.filter((l) => {
       const d = new Date(l.date);
       return d.getFullYear() === y && d.getMonth() === m;
     });
+
+    console.log("[Profile] 이번 달 감정 기록:", monthLogs);
 
     const total = monthLogs.length || 1;
     const countsByMood: Record<string, number> = {};
@@ -142,33 +144,40 @@ function ProfilePage() {
       return { key: mm.key, label: mm.label, emoji: mm.emoji, value: pct };
     });
 
+    console.log("[Profile] 감정 통계:", data);
     return { data, totalLogs: monthLogs.length };
-  }, [logs]);
+  }, [moodLogs]);
 
-  // trait radar (Market.tsx에서 그대로 가져온 패턴)
-  const taken = hasAnyTraitScore();
-  const scores = readTraitScores();
+  // 성향 점수 (백엔드 연동)
+  const { scores, hasAnyScore, fetchTraits } = useTraitsStore();
+
+  // 페이지 로드 시 성향 점수 가져오기
+  useEffect(() => {
+    fetchTraits();
+  }, [fetchTraits]);
+
+  const taken = hasAnyScore();
 
   const radarData = useMemo(() => {
     return [
-      { axis: '집중', score: scores.attention ?? 0 },
-      { axis: '충동', score: scores.impulsive ?? 0 },
-      { axis: '복합', score: scores.complex ?? 0 },
-      { axis: '감정', score: scores.emotional ?? 0 },
-      { axis: '동기', score: scores.motivation ?? 0 },
-      { axis: '환경', score: scores.environment ?? 0 },
+      { axis: "집중", score: scores?.attention ?? 0 },
+      { axis: "충동", score: scores?.impulsive ?? 0 },
+      { axis: "복합", score: scores?.complex ?? 0 },
+      { axis: "감정", score: scores?.emotional ?? 0 },
+      { axis: "동기", score: scores?.motivation ?? 0 },
+      { axis: "환경", score: scores?.environment ?? 0 },
     ];
   }, [scores]);
 
   const topTrait = useMemo<TraitKey | null>(() => {
-    if (!taken) return null;
+    if (!taken || !scores) return null;
     const entries: Array<[TraitKey, number]> = [
-      ['attention', scores.attention ?? 0],
-      ['impulsive', scores.impulsive ?? 0],
-      ['complex', scores.complex ?? 0],
-      ['emotional', scores.emotional ?? 0],
-      ['motivation', scores.motivation ?? 0],
-      ['environment', scores.environment ?? 0],
+      ["attention", scores.attention ?? 0],
+      ["impulsive", scores.impulsive ?? 0],
+      ["complex", scores.complex ?? 0],
+      ["emotional", scores.emotional ?? 0],
+      ["motivation", scores.motivation ?? 0],
+      ["environment", scores.environment ?? 0],
     ];
     const max = Math.max(...entries.map(([, v]) => v));
     if (max <= 0) return null;
@@ -176,19 +185,19 @@ function ProfilePage() {
   }, [taken, scores]);
 
   const traitTitle = useMemo(() => {
-    if (!taken || !topTrait) return '이번 달 당신의 ADHD 성향';
+    if (!taken || !topTrait) return "이번 달 당신의 ADHD 성향";
     const map: Record<TraitKey, string> = {
-      attention: '집중형',
-      impulsive: '충동형',
-      complex: '복합형',
-      emotional: '감정형',
-      motivation: '동기형',
-      environment: '환경형',
+      attention: "집중형",
+      impulsive: "충동형",
+      complex: "복합형",
+      emotional: "감정형",
+      motivation: "동기형",
+      environment: "환경형",
     };
     return `이번 달 당신의 ADHD 성향 · ${map[topTrait]}`;
   }, [taken, topTrait]);
 
-  const cardSoft = 'bg-[#F5F0E5] rounded-2xl p-5 text-center';
+  const cardSoft = "bg-[#F5F0E5] rounded-2xl p-5 text-center";
 
   return (
     <div className="w-full px-4 ">
@@ -218,7 +227,7 @@ function ProfilePage() {
               className="hidden"
               onChange={handleAvatarChange}
             />
-            <p className="text-[12px] text-[#795549]/70 mt-1">
+            <p className="text-[12px] text-[#795549]/70 mt-1 cursor-pointer">
               프로필 사진 변경
             </p>
           </label>
@@ -291,7 +300,7 @@ function ProfilePage() {
           </h3>
 
           <Card className="p-4 rounded-2xl shadow-sm">
-            <div className="h-[160px]">
+            <div className="h-40">
               {moodStats.totalLogs === 0 ? (
                 <div className="h-full flex items-center justify-center text-[12px] text-[#795549]/70">
                   아직 감정 기록이 없어요. Report에서 기록하면 그래프가 생겨요.
@@ -342,7 +351,7 @@ function ProfilePage() {
             ) : (
               <ChartContainer
                 config={chartConfig}
-                className="w-full h-[260px] min-h-[260px]"
+                className="w-full h-65 min-h-65"
               >
                 <RadarChart
                   data={radarData}
@@ -380,13 +389,13 @@ function ProfilePage() {
           </p>
 
           <h3 className="text-[13px] font-semibold text-[#795549] mt-6 mb-2">
-            총 실행 ADHD에 특화된 루틴 TOP 4
+            ADHD에 특화된 루틴 실행 현황
           </h3>
           <div className="space-y-2">
-            {top4RoutinesForText.map((r, idx) => (
+            {routinesWithCount.map((r, idx) => (
               <div key={r.id} className="text-[12px] text-[#795549]/80">
-                {idx + 1}.{' '}
-                <span className="font-semibold text-[#795549]">{r.title}</span>{' '}
+                {idx + 1}.{" "}
+                <span className="font-semibold text-[#795549]">{r.title}</span>{" "}
                 <span className="text-[#795549]/70">({r.count}회)</span>
                 <div className="text-[#795549]/60">{r.subtitle}</div>
               </div>
@@ -403,7 +412,7 @@ function ProfilePage() {
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => navigate('/care/ai')}
+              onClick={() => navigate("/care/ai")}
               className="w-full text-left bg-[#8B6A5A] rounded-2xl p-4 shadow-sm"
             >
               <div className="flex items-center gap-3">
@@ -423,7 +432,7 @@ function ProfilePage() {
 
             <button
               type="button"
-              onClick={() => navigate('/care/expert')}
+              onClick={() => navigate("/care/expert")}
               className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-[#DBA67A]/30"
             >
               <div className="flex items-center gap-3">
@@ -454,30 +463,30 @@ function ProfilePage() {
           <div className="space-y-3">
             {[
               {
-                title: 'ADHD 학습 자료',
-                desc: 'ADHD에 강한 학습 이해법',
-                icon: '📝',
-                to: 'https://blog.naver.com/msh4688',
+                title: "ADHD 학습 자료",
+                desc: "ADHD에 강한 학습 이해법",
+                icon: "📝",
+                to: "https://blog.naver.com/msh4688",
               },
               {
-                title: 'ADHD 커뮤니티',
-                desc: '리포트 공유, 동료와 함께',
-                icon: '👥',
-                to: 'https://open.kakao.com/o/gOW56u7h',
+                title: "ADHD 커뮤니티",
+                desc: "리포트 공유, 동료와 함께",
+                icon: "👥",
+                to: "https://open.kakao.com/o/gOW56u7h",
               },
               {
-                title: '병원 연계 서비스',
-                desc: 'FLOCA와 함께하는 진단·상담',
-                icon: '🏥',
-                to: '/partners/clinic',
+                title: "병원 연계 서비스",
+                desc: "FLOCA와 함께하는 진단·상담",
+                icon: "🏥",
+                to: "/partners/clinic",
               },
             ].map((it) => (
               <button
                 key={it.title}
                 type="button"
                 onClick={() => {
-                  if (it.to.startsWith('http')) {
-                    window.open(it.to, '_blank', 'noopener,noreferrer');
+                  if (it.to.startsWith("http")) {
+                    window.open(it.to, "_blank", "noopener,noreferrer");
                   } else {
                     navigate(it.to);
                   }
@@ -518,6 +527,16 @@ function ProfilePage() {
               <br />
               앞으로도 당신만의 속도로 천천히 나아가요.
             </p>
+          </div>
+
+          <div className="mt-6">
+            <PrimaryPillButton
+              className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
+              onClick={() => navigate("/report")}
+            >
+              <span aria-hidden>✏️</span>
+              <span>기록하러 가기 →</span>
+            </PrimaryPillButton>
           </div>
         </section>
       </div>

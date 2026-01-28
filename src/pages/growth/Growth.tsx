@@ -1,8 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { PrimaryPillButton } from "@/components/common/PillButton";
 import XpBar from "@/components/common/XpBar";
-import { useProgressStore } from "@/store/progress";
-import { useGrowthStore } from "@/store/growth";
+import { useProgressStore, useGrowthStore } from "@/store";
 import { useNavigate } from "react-router-dom";
 
 const GROWTH_STAGES = [
@@ -91,22 +90,26 @@ function GrowthPage() {
     fetchAll: fetchStats,
   } = useGrowthStore();
 
-  // 페이지 로드 시 데이터 가져오기
+  // 페이지 로드 시 데이터 가져오기 (항상 최신 데이터 fetch)
   useEffect(() => {
+    console.log('[Growth] 페이지 마운트 - 데이터 fetch 시작');
     syncFromBackend();
     fetchStats();
-  }, [syncFromBackend, fetchStats]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const growth = getGrowthStage(level);
   const cardClass = "bg-white rounded-xl shadow-sm";
   const isLoading = treeLoading || statsLoading;
 
-  // 백엔드 루틴 랭킹을 ROUTINES_META와 매핑
+  // 백엔드 루틴 랭킹을 ROUTINES_META와 매핑 (원래 순서 유지)
   const routineRanking = useMemo(() => {
-    return ROUTINES_META.map((r) => {
+    console.log('[Growth] apiRoutineRanking 데이터:', apiRoutineRanking);
+    const result = ROUTINES_META.map((r) => {
       const apiData = apiRoutineRanking.find((ar) => ar.routineId === r.id);
       return { ...r, count: apiData?.count ?? 0 };
-    }).sort((a, b) => b.count - a.count);
+    });
+    console.log('[Growth] 루틴 실행 현황:', result);
+    return result;
   }, [apiRoutineRanking]);
 
   if (isLoading) {

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PrimaryPillButton } from '@/components/common/PillButton';
-import { writeTraitScore } from '@/utils/traitScore'; // ✅ 추가
+import { writeTraitScore, readTraitScores } from '@/utils/traitScore';
+import { useTraitsStore } from '@/store/traits';
 
 const ROUTINES = [
   '시작만 하면 될 것 같은데, 그 시작이 너무 어렵다',
@@ -16,6 +17,7 @@ type BranchState = {
 function AttentionTypePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { updateTraits } = useTraitsStore();
 
   // ✅ 이전 페이지에서 넘어온 큐(다음에 보여줄 타입 페이지들)
   const state = (location.state ?? {}) as BranchState;
@@ -50,11 +52,26 @@ function AttentionTypePage() {
     });
   }
 
-  function goNext() {
+  async function goNext() {
     const score = Object.values(checked).filter(Boolean).length;
     writeTraitScore('attention', score);
-    // ✅ 큐가 남아있으면 다음 타입 페이지로, 없으면 마켓으로
+
+    // ✅ 큐가 남아있으면 다음 타입 페이지로, 없으면 백엔드 저장 후 마켓으로
     if (queue.length === 0) {
+      // 로컬스토리지에서 모든 점수 읽어서 백엔드에 저장
+      const allScores = readTraitScores();
+      try {
+        await updateTraits({
+          attention: allScores.attention ?? 0,
+          impulsive: allScores.impulsive ?? 0,
+          complex: allScores.complex ?? 0,
+          emotional: allScores.emotional ?? 0,
+          motivation: allScores.motivation ?? 0,
+          environment: allScores.environment ?? 0,
+        });
+      } catch (error) {
+        console.error('성향 점수 저장 실패:', error);
+      }
       navigate('/market');
       return;
     }
