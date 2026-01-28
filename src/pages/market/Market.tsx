@@ -195,7 +195,20 @@ function MarketPage() {
             imageSrc="/assets/items/watering-can.png"
             desc={'나무 성장 XP를\n더 빨리 올려줘요'}
             price={15}
-            onBuy={() => navigate('/market/order/cartpage')}
+            onBuy={() =>
+              navigate('/market/order/cartpage', {
+                state: {
+                  product: {
+                    id: 'watering-can',
+                    title: '물뿌리개',
+                    desc: '나무 성장 XP를 더 빨리 올려줘요',
+                    imageSrc: '/assets/items/watering-can.png',
+                    price: 15,
+                    xpBonus: 50,
+                  },
+                },
+              })
+            }
           />
 
           <ProductCard
