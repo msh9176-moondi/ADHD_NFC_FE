@@ -151,10 +151,11 @@ function ProfilePage() {
   // 성향 점수 (백엔드 연동)
   const { scores, hasAnyScore, fetchTraits } = useTraitsStore();
 
-  // 페이지 로드 시 성향 점수 가져오기
+  // 페이지 로드 시 성향 점수 가져오기 (항상 최신 데이터 fetch)
   useEffect(() => {
+    console.log('[Profile] fetchTraits 호출');
     fetchTraits();
-  }, [fetchTraits]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const taken = hasAnyScore();
 

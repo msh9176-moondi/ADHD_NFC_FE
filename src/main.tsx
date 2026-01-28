@@ -80,7 +80,7 @@ createRoot(document.getElementById("root")!).render(
             element={<EmotionalTypePage />}
           />
           <Route
-            path="market/test/branchingtest/enviromnet"
+            path="market/test/branchingtest/environment"
             element={<EnvironmentTypePage />}
           />
           <Route

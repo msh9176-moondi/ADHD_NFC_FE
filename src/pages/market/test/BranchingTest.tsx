@@ -28,7 +28,7 @@ const ROUTE_BY_TEXT: Record<(typeof ROUTINES)[number], string> = {
   '하고 싶은데 몸에 시동이 안걸린다': '/market/test/branchingtest/motivation',
 
   '장소나 분위기에 따라 완전히 다른 사람이 된다':
-    '/market/test/branchingtest/enviromnet',
+    '/market/test/branchingtest/environment',
 };
 
 function BranchingTestPage() {
