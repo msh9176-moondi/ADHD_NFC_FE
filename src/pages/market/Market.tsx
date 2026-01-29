@@ -76,11 +76,10 @@ function MarketPage() {
   const navigate = useNavigate();
   const { scores, hasAnyScore, fetchTraits } = useTraitsStore();
 
-  // 페이지 로드 시 성향 점수 가져오기 (항상 최신 데이터 fetch)
+  // 페이지 로드 시 성향 점수 가져오기
   useEffect(() => {
-    console.log('[Market] 페이지 마운트 - fetchTraits 호출');
     fetchTraits();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchTraits]);
 
   const taken = hasAnyScore();
   const topTrait = useMemo<TraitKey | null>(() => {
@@ -160,7 +159,7 @@ function MarketPage() {
   }, [taken, scores]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full mt-12">
+    <div className="flex flex-col items-center justify-center w-full mt-14">
       {/* 메인 타이틀 */}
       <section className="relative flex flex-col items-center justify-center w-full">
         {/* 코인 칩 */}
@@ -195,20 +194,7 @@ function MarketPage() {
             imageSrc="/assets/items/watering-can.png"
             desc={'나무 성장 XP를\n더 빨리 올려줘요'}
             price={15}
-            onBuy={() =>
-              navigate('/market/order/cartpage', {
-                state: {
-                  product: {
-                    id: 'watering-can',
-                    title: '물뿌리개',
-                    desc: '나무 성장 XP를 더 빨리 올려줘요',
-                    imageSrc: '/assets/items/watering-can.png',
-                    price: 15,
-                    xpBonus: 50,
-                  },
-                },
-              })
-            }
+            onBuy={() => navigate('/market/order/cartpage')}
           />
 
           <ProductCard

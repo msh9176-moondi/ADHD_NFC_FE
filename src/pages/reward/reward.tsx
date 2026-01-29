@@ -55,6 +55,8 @@ function RewardPage() {
 
   const [receivedToday, setReceivedToday] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalTagCount, setTotalTagCount] = useState(0);
+  const [coinAwarded, setCoinAwarded] = useState(false);
 
   // URL에서 cardUid 파라미터 확인 (NFC 태그에서 전달)
   const cardUid = searchParams.get('cardUid');
@@ -64,33 +66,31 @@ function RewardPage() {
       // 먼저 백엔드에서 현재 데이터 동기화
       await syncFromBackend();
 
-      // cardUid가 있으면 NFC 태그로 들어온 것 → 코인 지급 시도
-      if (cardUid) {
-        try {
-          const response = await api.post('/nfc/checkin', { cardUid });
+      // NFC 태그 페이지 접속 → 체크인 시도 (cardUid는 선택사항)
+      try {
+        const response = await api.post('/nfc/checkin', cardUid ? { cardUid } : {});
+        const data = response.data;
 
-          if (response.data.success && !response.data.alreadyCheckedIn) {
-            // 백엔드에서 보상 지급됨 → 다시 동기화해서 최신 데이터 반영
-            await syncFromBackend();
-          }
-          setReceivedToday(true);
-        } catch (error: any) {
-          console.error('NFC 보상 처리 실패:', error);
-          // 오늘 이미 받았는지 확인
-          try {
-            const statusRes = await api.get('/nfc/checkin/status');
-            setReceivedToday(statusRes.data.checkedInToday);
-          } catch {
-            // 상태 확인 실패 시 무시
-          }
+        // 조회수 업데이트 (항상)
+        setTotalTagCount(data.totalTagCount || 0);
+
+        // 이번 태깅에서 코인을 받았는지
+        setCoinAwarded(!data.alreadyCheckedIn && data.success);
+        setReceivedToday(data.alreadyCheckedIn || data.success);
+
+        if (data.success && !data.alreadyCheckedIn) {
+          // 백엔드에서 보상 지급됨 → 다시 동기화해서 최신 데이터 반영
+          await syncFromBackend();
         }
-      } else {
-        // cardUid 없으면 오늘 받았는지만 확인
+      } catch (error: any) {
+        console.error('NFC 보상 처리 실패:', error);
+        // 오늘 이미 받았는지 확인
         try {
-          const response = await api.get('/nfc/checkin/status');
-          setReceivedToday(response.data.checkedInToday);
-        } catch (error) {
-          console.error('상태 확인 실패:', error);
+          const statusRes = await api.get('/nfc/checkin/status');
+          setReceivedToday(statusRes.data.checkedInToday);
+          setTotalTagCount(statusRes.data.totalTagCount || 0);
+        } catch {
+          // 상태 확인 실패 시 무시
         }
       }
       setIsLoading(false);
@@ -110,7 +110,8 @@ function RewardPage() {
         >
           {isLoading ? (
             <div className="text-[#795549] mt-12">로딩 중...</div>
-          ) : receivedToday ? (
+          ) : coinAwarded ? (
+            // 첫 태깅: 코인 획득!
             <>
               <div className="text-2xl text-[#795549] font-bold mt-12 animate-bounce">
                 코인+15 획득!
@@ -121,10 +122,30 @@ function RewardPage() {
               <div className="w-full text-center mt-0 text-[#795549]">
                 당신의 한 작은 걸음이, 내일의 큰 변화가 됩니다.
               </div>
+              <div className="text-sm text-[#795549]/70 mt-2">
+                누적 조회수: {totalTagCount}회
+              </div>
+            </>
+          ) : receivedToday ? (
+            // 이후 태깅: 조회수만 증가
+            <>
+              <div className="text-2xl text-[#795549] font-bold mt-12">
+                조회수 +1!
+              </div>
+              <div className="opacity-70">
+                <img src="/assets/coin.svg" alt="coin" />
+              </div>
+              <div className="text-lg text-[#795549] font-semibold">
+                누적 조회수: {totalTagCount}회
+              </div>
+              <div className="w-full text-center mt-0 text-[#795549]/70 text-sm">
+                코인은 하루 1회만 지급됩니다
+              </div>
             </>
           ) : (
+            // 태깅 전
             <>
-              <div className="text-2xl text-[#795549] font-bold  animate-bounce">
+              <div className="text-2xl text-[#795549] font-bold animate-bounce">
                 오늘의 보상
               </div>
               <div className="opacity-70">
@@ -133,6 +154,11 @@ function RewardPage() {
               <div className="w-full text-center mt-0 text-[#795549]">
                 NFC 태그를 찍어 코인을 받으세요!
               </div>
+              {totalTagCount > 0 && (
+                <div className="text-sm text-[#795549]/70 mt-2">
+                  누적 조회수: {totalTagCount}회
+                </div>
+              )}
             </>
           )}
         </div>
