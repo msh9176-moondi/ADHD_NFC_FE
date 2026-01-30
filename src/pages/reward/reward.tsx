@@ -4,48 +4,7 @@ import { api } from '@/lib/api';
 import { useProgressStore } from '@/store/progress';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-
-const GROWTH_STAGES = [
-  {
-    minLevel: 1,
-    asset: '/assets/seed/seed-1.svg',
-    text: '씨앗이 자라고 있어요!!',
-  },
-  { minLevel: 2, asset: '/assets/seed/seed-2.svg', text: '씨앗이 돋아났어요!' },
-  {
-    minLevel: 3,
-    asset: '/assets/seed/seed-3.svg',
-    text: '새싹이 자라고 있어요!!',
-  },
-  { minLevel: 4, asset: '/assets/seed/seed-4.svg', text: '잎이 무성해졌어요!' },
-  {
-    minLevel: 5,
-    asset: '/assets/seed/seed-5.svg',
-    text: '작은 나무가 되었어요!',
-  },
-  {
-    minLevel: 6,
-    asset: '/assets/seed/seed-6.svg',
-    text: '나무가 자라고 있어요!',
-  },
-  {
-    minLevel: 7,
-    asset: '/assets/seed/seed-7.svg',
-    text: '큰 나무가 되었어요!',
-  },
-  {
-    minLevel: 8,
-    asset: '/assets/seed/seed-8.svg',
-    text: '나무에 열매가 맺혔어요!',
-  },
-] as const;
-
-function getGrowthStage(level: number) {
-  for (let i = GROWTH_STAGES.length - 1; i >= 0; i--) {
-    if (level >= GROWTH_STAGES[i].minLevel) return GROWTH_STAGES[i];
-  }
-  return GROWTH_STAGES[0];
-}
+import { getGrowthStage } from '@/utils/traits';
 
 function RewardPage() {
   const { level, xp, xpToNext, syncFromBackend } = useProgressStore();

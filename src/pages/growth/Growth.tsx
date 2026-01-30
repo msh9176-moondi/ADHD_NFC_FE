@@ -1,79 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { PrimaryPillButton } from '@/components/common/PillButton';
 import XpBar from '@/components/common/XpBar';
+import { StatCard } from '@/components/common';
 import { useProgressStore } from '@/store/progress';
 import { useGrowthStore } from '@/store/growth';
 import { useNavigate } from 'react-router-dom';
-
-const GROWTH_STAGES = [
-  {
-    minLevel: 1,
-    asset: '/assets/seed/seed-1.svg',
-    text: '씨앗이 자라고 있어요!!',
-  },
-  { minLevel: 2, asset: '/assets/seed/seed-2.svg', text: '씨앗이 돋아났어요!' },
-  {
-    minLevel: 3,
-    asset: '/assets/seed/seed-3.svg',
-    text: '새싹이 자라고 있어요!!',
-  },
-  { minLevel: 4, asset: '/assets/seed/seed-4.svg', text: '잎이 무성해졌어요!' },
-  {
-    minLevel: 5,
-    asset: '/assets/seed/seed-5.svg',
-    text: '작은 나무가 되었어요!',
-  },
-  {
-    minLevel: 6,
-    asset: '/assets/seed/seed-6.svg',
-    text: '나무가 자라고 있어요!',
-  },
-  {
-    minLevel: 7,
-    asset: '/assets/seed/seed-7.svg',
-    text: '큰 나무가 되었어요!',
-  },
-  {
-    minLevel: 8,
-    asset: '/assets/seed/seed-8.svg',
-    text: '나무에 열매가 맺혔어요!',
-  },
-] as const;
-
-function getGrowthStage(level: number) {
-  for (let i = GROWTH_STAGES.length - 1; i >= 0; i--) {
-    if (level >= GROWTH_STAGES[i].minLevel) return GROWTH_STAGES[i];
-  }
-  return GROWTH_STAGES[0];
-}
-
-const ROUTINES_META = [
-  {
-    id: 'water',
-    title: '물 마시기',
-    subtitle: '몸에게 주는 작은 선물',
-    emoji: '💧',
-  },
-  {
-    id: 'clean',
-    title: '청소하기',
-    subtitle: '마음도 함께 정돈돼요',
-    emoji: '🧹',
-  },
-  { id: 'walk', title: '걷기', subtitle: '생각이 맑아지는 시간', emoji: '🚶' },
-  {
-    id: 'meditate',
-    title: '명상하기',
-    subtitle: '잠시 멈춤의 여유',
-    emoji: '🧘',
-  },
-  {
-    id: 'plan',
-    title: '계획 세우기',
-    subtitle: '내일을 위한 준비',
-    emoji: '📝',
-  },
-] as const;
+import { ROUTINES_META } from '@/constants';
+import { getGrowthStage } from '@/utils/traits';
 
 function GrowthPage() {
   const navigate = useNavigate();
@@ -105,7 +38,6 @@ function GrowthPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const growth = getGrowthStage(level);
-  const cardClass = 'bg-white rounded-xl shadow-sm';
   const isLoading = treeLoading || statsLoading;
 
   // 백엔드 루틴 랭킹을 ROUTINES_META와 매핑 (원래 순서 유지)
@@ -195,53 +127,10 @@ function GrowthPage() {
           </h3>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#F5F0E5] rounded-2xl p-5 text-center">
-              <div className="text-[28px] mb-2" aria-hidden>
-                🤎
-              </div>
-              <div className="text-[20px] font-bold text-[#795549]">
-                {totalExecutions}
-              </div>
-              <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-                총 실행
-              </div>
-            </div>
-
-            <div className="bg-[#F5F0E5] rounded-2xl p-5 text-center">
-              <div className="text-[28px] mb-2" aria-hidden>
-                🔥
-              </div>
-              <div className="text-[20px] font-bold text-[#795549]">
-                {currentStreak}
-              </div>
-              <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-                연속 실행
-              </div>
-            </div>
-
-            <div className="bg-[#F5F0E5] rounded-2xl p-5 text-center">
-              <div className="text-[28px] mb-2" aria-hidden>
-                📅
-              </div>
-              <div className="text-[20px] font-bold text-[#795549]">
-                {totalDays}
-              </div>
-              <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-                기록 일수
-              </div>
-            </div>
-
-            <div className="bg-[#F5F0E5] rounded-2xl p-5 text-center">
-              <div className="text-[28px] mb-2" aria-hidden>
-                🌳
-              </div>
-              <div className="text-[20px] font-bold text-[#795549]">
-                {level}
-              </div>
-              <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-                나무 레벨
-              </div>
-            </div>
+            <StatCard emoji="🤎" value={totalExecutions} label="총 실행" />
+            <StatCard emoji="🔥" value={currentStreak} label="연속 실행" />
+            <StatCard emoji="📅" value={totalDays} label="기록 일수" />
+            <StatCard emoji="🌳" value={level} label="나무 레벨" />
           </div>
         </section>
 

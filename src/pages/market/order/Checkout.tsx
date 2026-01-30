@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { PrimaryPillButton } from '@/components/common/PillButton';
+import { PrimaryPillButton, PageHeader } from '@/components/common';
 import { useProgressStore } from '@/store/progress';
 
 type OrderItem = {
@@ -87,19 +87,12 @@ function CheckoutPage() {
   return (
     <div className="flex flex-col items-center w-full mt-12">
       {/* 헤더 */}
-      <section className="relative flex flex-col items-center justify-center w-full">
-        <div className="absolute -right-3 -top-6 flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 shadow-sm">
-          <img src="/assets/dopacoin.svg" alt="coin" className="w-6 h-6" />
-          <span className="text-[16px] font-semibold text-[#795549]">
-            {coins.toLocaleString()}
-          </span>
-        </div>
-
-        <div className="text-4xl text-[#795549] font-extrabold">결제하기</div>
-        <div className="text-center text-[12px] text-[#795549] mt-3">
-          주문 정보를 확인해주세요
-        </div>
-      </section>
+      <PageHeader
+        title="결제하기"
+        subtitle="주문 정보를 확인해주세요"
+        coins={coins}
+        titleClassName="text-4xl"
+      />
 
       {/* 주문 상품 */}
       <section className="w-full mt-6">

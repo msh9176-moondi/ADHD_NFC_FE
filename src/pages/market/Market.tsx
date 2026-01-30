@@ -1,4 +1,4 @@
-import { ProductCard } from '@/components/common';
+import { ProductCard, PageHeader } from '@/components/common';
 import { PrimaryPillButton } from '@/components/common/PillButton';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/chart';
 import { useProgressStore } from '@/store/progress';
 import { useTraitsStore, type TraitKey } from '@/store/traits';
+import { getTopTrait, TRAIT_DESCRIPTIONS } from '@/utils/traits';
 
 type Recommended = {
   title: string;
@@ -83,21 +84,8 @@ function MarketPage() {
 
   const taken = hasAnyScore();
   const topTrait = useMemo<TraitKey | null>(() => {
-    if (!taken || !scores) return null;
-
-    const entries: Array<[TraitKey, number]> = [
-      ['attention', scores.attention ?? 0],
-      ['impulsive', scores.impulsive ?? 0],
-      ['complex', scores.complex ?? 0],
-      ['emotional', scores.emotional ?? 0],
-      ['motivation', scores.motivation ?? 0],
-      ['environment', scores.environment ?? 0],
-    ];
-
-    const max = Math.max(...entries.map(([, v]) => v));
-    if (max <= 0) return null;
-
-    return entries.find(([, v]) => v === max)?.[0] ?? null;
+    if (!taken) return null;
+    return getTopTrait(scores);
   }, [taken, scores]);
 
   const chartData = useMemo(() => {
@@ -112,71 +100,24 @@ function MarketPage() {
     ];
   }, [scores]);
 
-  const TRAIT_DESC: Record<TraitKey, [string, string]> = {
-    attention: ['머리는 준비됐는데,', '시작 버튼이 안 눌리는 타입이에요.'],
-    impulsive: [
-      '반응이 먼저 나와요.',
-      '흥분하면 속도 조절이 어려울 수 있어요.',
-    ],
-    complex: ['날마다 컨디션이 달라요.', '잘될 때,안될 때 기복이 커요.'],
-    emotional: ['작은 자극에도 흔들려요.', '회복까지 시간이 걸릴 수 있어요.'],
-    motivation: [
-      '중요한 걸 알아도 시동이 늦어요.',
-      '외부 압박이 트리거가 돼요.',
-    ],
-    environment: [
-      '환경에 따라 성능이 바뀌어요.',
-      '집에서는 특히 막힐 수 있어요.',
-    ],
-  };
-
   const topTraitLines = useMemo(() => {
-    if (!taken || !scores)
+    if (!taken || !topTrait)
       return [
         '당신의 패턴을 요약해서',
         '"지금 필요한 도구"를 추천해요.',
       ] as const;
 
-    const entries: Array<[TraitKey, number]> = [
-      ['attention', scores.attention ?? 0],
-      ['impulsive', scores.impulsive ?? 0],
-      ['complex', scores.complex ?? 0],
-      ['emotional', scores.emotional ?? 0],
-      ['motivation', scores.motivation ?? 0],
-      ['environment', scores.environment ?? 0],
-    ];
-
-    const max = Math.max(...entries.map(([, v]) => v));
-    const top = entries.find(([, v]) => v === max)?.[0];
-
-    if (!top || max <= 0)
-      return [
-        '테스트 결과를 기반으로',
-        '“지금 필요한 도구”를 추천해요.',
-      ] as const;
-
-    return TRAIT_DESC[top];
-  }, [taken, scores]);
+    return TRAIT_DESCRIPTIONS[topTrait];
+  }, [taken, topTrait]);
 
   return (
     <div className="flex flex-col items-center justify-center w-full mt-14">
       {/* 메인 타이틀 */}
-      <section className="relative flex flex-col items-center justify-center w-full">
-        {/* 코인 칩 */}
-        <div className="absolute -right-3 -top-6 flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 shadow-sm">
-          <img src="/assets/dopacoin.svg" alt="coin" className="w-6 h-6" />
-          <span className="text-[16px] font-semibold text-[#795549]">
-            {coins.toLocaleString()}
-          </span>
-        </div>
-
-        <div className="text-5xl text-[#795549] font-extrabold">
-          Dopa Market
-        </div>
-        <div className="text-center text-[12px] text-[#795549] mt-3">
-          당신의 일상을 도와줄 특별한 아이템
-        </div>
-      </section>
+      <PageHeader
+        title="Dopa Market"
+        subtitle="당신의 일상을 도와줄 특별한 아이템"
+        coins={coins}
+      />
 
       {/* 카드 박스 */}
       <section className="w-full mt-2 max-h-160 overflow-y-auto overscroll-contain pr-1 no-scrollbar">

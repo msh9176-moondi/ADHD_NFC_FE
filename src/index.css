@@ -42,6 +42,15 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ADHD 테마 색상 */
+  --color-adhd-brown: #795549;
+  --color-adhd-brown-light: #DBA67A;
+  --color-adhd-beige: #F5F0E5;
+  --color-adhd-beige-alt: #F5F1EB;
+  --color-adhd-gray: #F5F5F5;
+  --color-adhd-brown-dark: #8B6A5A;
+  --color-adhd-hexagon: #D9A77F;
 }
 
 :root {

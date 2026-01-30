@@ -2,25 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrimaryPillButton } from '@/components/common/PillButton';
 import { useReportStore, useGrowthStore, useProgressStore } from '@/store';
-
-type MoodKey = 'excited' | 'calm' | 'sleepy' | 'tired' | 'angry';
-
-const MOODS: Array<{ key: MoodKey; label: string; emoji: string }> = [
-  { key: 'excited', label: '들뜸', emoji: '🤩' },
-  { key: 'calm', label: '평온', emoji: '😊' },
-  { key: 'sleepy', label: '피곤', emoji: '😴' },
-  { key: 'tired', label: '무기력', emoji: '😣' },
-  { key: 'angry', label: '짜증', emoji: '😡' },
-];
-
-// ✅ 루틴을 id 기반으로 변경 (랭킹/누적에 안전)
-const ROUTINES = [
-  { id: 'water', title: '물 마시기', subtitle: '몸에게 주는 작은 선물' },
-  { id: 'clean', title: '청소하기', subtitle: '마음도 함께 정돈돼요' },
-  { id: 'walk', title: '걷기', subtitle: '생각이 맑아지는 시간' },
-  { id: 'meditate', title: '명상하기', subtitle: '잠시 멈춤의 여유' },
-  { id: 'plan', title: '계획 세우기', subtitle: '내일을 위한 준비' },
-] as const;
+import { ROUTINES_META, MOODS_REPORT, type MoodKey } from '@/constants';
 
 const SCALE_LABELS = [
   '거의 못함',
@@ -56,8 +38,8 @@ function ReportPage() {
   const card = 'bg-white rounded-xl shadow-sm';
 
   const handleSubmit = async () => {
-    // ✅ 체크된 루틴 id 추출
-    const completedRoutineIds = ROUTINES.map((r, idx) =>
+    // 체크된 루틴 id 추출
+    const completedRoutineIds = ROUTINES_META.map((r, idx) =>
       checked[idx] ? r.id : null,
     ).filter(Boolean) as string[];
 
@@ -108,7 +90,7 @@ function ReportPage() {
 
           <div className={`${card} px-5 py-4`}>
             <div className="flex items-center justify-between">
-              {MOODS.map((m) => {
+              {MOODS_REPORT.map((m) => {
                 const active = mood === m.key;
                 return (
                   <button
@@ -190,7 +172,7 @@ function ReportPage() {
           </h3>
 
           <div className="space-y-3">
-            {ROUTINES.map((r, idx) => (
+            {ROUTINES_META.map((r, idx) => (
               <label
                 key={r.id}
                 className={[

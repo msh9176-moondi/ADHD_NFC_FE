@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { PrimaryPillButton } from "@/components/common/PillButton";
+import { StatCard } from "@/components/common";
 import { useProgressStore, useGrowthStore } from "@/store";
-import { useTraitsStore, type TraitKey } from "@/store/traits";
+import { useTraitsStore } from "@/store/traits";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -21,42 +22,8 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-
-const ROUTINES_META = [
-  {
-    id: "water",
-    title: "물 마시기",
-    subtitle: "몸에게 주는 작은 선물",
-    emoji: "💧",
-  },
-  {
-    id: "clean",
-    title: "청소하기",
-    subtitle: "마음도 함께 정돈돼요",
-    emoji: "🧹",
-  },
-  { id: "walk", title: "걷기", subtitle: "생각이 맑아지는 시간", emoji: "🚶" },
-  {
-    id: "meditate",
-    title: "명상하기",
-    subtitle: "잠시 멈춤의 여유",
-    emoji: "🧘",
-  },
-  {
-    id: "plan",
-    title: "계획 세우기",
-    subtitle: "내일을 위한 준비",
-    emoji: "📝",
-  },
-] as const;
-
-const MOODS = [
-  { key: "excited", label: "기쁨", emoji: "🤩" },
-  { key: "calm", label: "평온", emoji: "😊" },
-  { key: "sleepy", label: "피곤", emoji: "😴" },
-  { key: "tired", label: "무기력", emoji: "😣" },
-  { key: "angry", label: "짜증", emoji: "😡" },
-] as const;
+import { ROUTINES_META, MOODS } from "@/constants";
+import { getTopTrait, TRAIT_NAMES } from "@/utils/traits";
 
 const chartConfig = {
   score: { label: "Score", color: "var(--chart-1)" },
@@ -170,35 +137,15 @@ function ProfilePage() {
     ];
   }, [scores]);
 
-  const topTrait = useMemo<TraitKey | null>(() => {
-    if (!taken || !scores) return null;
-    const entries: Array<[TraitKey, number]> = [
-      ["attention", scores.attention ?? 0],
-      ["impulsive", scores.impulsive ?? 0],
-      ["complex", scores.complex ?? 0],
-      ["emotional", scores.emotional ?? 0],
-      ["motivation", scores.motivation ?? 0],
-      ["environment", scores.environment ?? 0],
-    ];
-    const max = Math.max(...entries.map(([, v]) => v));
-    if (max <= 0) return null;
-    return entries.find(([, v]) => v === max)?.[0] ?? null;
+  const topTrait = useMemo(() => {
+    if (!taken) return null;
+    return getTopTrait(scores);
   }, [taken, scores]);
 
   const traitTitle = useMemo(() => {
     if (!taken || !topTrait) return "이번 달 당신의 ADHD 성향";
-    const map: Record<TraitKey, string> = {
-      attention: "집중형",
-      impulsive: "충동형",
-      complex: "복합형",
-      emotional: "감정형",
-      motivation: "동기형",
-      environment: "환경형",
-    };
-    return `이번 달 당신의 ADHD 성향 · ${map[topTrait]}`;
+    return `이번 달 당신의 ADHD 성향 · ${TRAIT_NAMES[topTrait]}`;
   }, [taken, topTrait]);
-
-  const cardSoft = "bg-[#F5F0E5] rounded-2xl p-5 text-center";
 
   return (
     <div className="w-full px-4 ">
@@ -247,51 +194,10 @@ function ProfilePage() {
 
         {/* 요약 2x2 */}
         <section className="mt-4 grid grid-cols-2 gap-3">
-          <div className={cardSoft}>
-            <div className="text-[26px] mb-2" aria-hidden>
-              🌳
-            </div>
-            <div className="text-[20px] font-bold text-[#795549]">{level}</div>
-            <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-              나무 레벨
-            </div>
-          </div>
-
-          <div className={cardSoft}>
-            <div className="text-[26px] mb-2" aria-hidden>
-              👍
-            </div>
-            <div className="text-[20px] font-bold text-[#795549]">
-              {totalExecutions}
-            </div>
-            <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-              보상 루틴(실천하기)
-            </div>
-          </div>
-
-          <div className={cardSoft}>
-            <div className="text-[28px] font-extrabold text-[#795549] mb-2">
-              XP
-            </div>
-            <div className="text-[20px] font-bold text-[#795549]">
-              {xpTotal}
-            </div>
-            <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-              총 경험치
-            </div>
-          </div>
-
-          <div className={cardSoft}>
-            <div className="text-[28px] font-extrabold text-[#795549] mb-2">
-              DAY
-            </div>
-            <div className="text-[20px] font-bold text-[#795549]">
-              {dayCount}
-            </div>
-            <div className="text-[12px] font-semibold text-[#DBA67A] mt-1">
-              사용 일수
-            </div>
-          </div>
+          <StatCard emoji="🌳" value={level} label="나무 레벨" />
+          <StatCard emoji="👍" value={totalExecutions} label="보상 루틴(실천하기)" />
+          <StatCard textIcon="XP" value={xpTotal} label="총 경험치" />
+          <StatCard textIcon="DAY" value={dayCount} label="사용 일수" />
         </section>
 
         {/* 이번 달 감정 여행 (막대 그래프) */}
