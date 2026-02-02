@@ -1,19 +1,23 @@
-import { ProductCard, PageHeader } from '@/components/common';
-import { PrimaryPillButton } from '@/components/common/PillButton';
-import { Card } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from 'recharts';
+import { ProductCard, PageHeader } from "@/components/common";
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart';
-import { useProgressStore } from '@/store/progress';
-import { useTraitsStore, type TraitKey } from '@/store/traits';
-import { getTopTrait, TRAIT_DESCRIPTIONS } from '@/utils/traits';
-import { api } from '@/lib/api';
+} from "@/components/ui/chart";
+import { useProgressStore } from "@/store/progress";
+import { useTraitsStore, type TraitKey } from "@/store/traits";
+import { useProductsStore } from "@/store/products";
+import { getTopTrait, TRAIT_DESCRIPTIONS } from "@/utils/traits";
+import { api } from "@/lib/api";
+
+// 물뿌리개 가격 상수
+const WATERING_CAN_PRICE = 15;
 
 type Recommended = {
   title: string;
@@ -24,43 +28,43 @@ type Recommended = {
 
 const RECOMMENDED_BY_TRAIT: Record<TraitKey, Recommended> = {
   attention: {
-    title: '타이머',
-    desc: '시간 감각을 잡아줘요',
-    imageSrc: '/assets/items/timer.png',
+    title: "타이머",
+    desc: "시간 감각을 잡아줘요",
+    imageSrc: "/assets/items/timer.png",
   },
   impulsive: {
-    title: '밸런스 보드',
-    desc: '몸을 쓰면 충동이 가라앉아요',
-    imageSrc: '/assets/items/balance-board.png', // 없으면 아이콘/다른 이미지로 교체
+    title: "밸런스 보드",
+    desc: "몸을 쓰면 충동이 가라앉아요",
+    imageSrc: "/assets/items/balance-board.png", // 없으면 아이콘/다른 이미지로 교체
   },
   complex: {
-    title: 'ADHD 플래너',
-    desc: '컨디션 기복을 구조로 받쳐줘요',
-    imageSrc: '/assets/items/planner.png',
+    title: "ADHD 플래너",
+    desc: "컨디션 기복을 구조로 받쳐줘요",
+    imageSrc: "/assets/items/planner.png",
   },
   emotional: {
-    title: '스트레스 볼',
-    desc: '감정 폭발 전에 손으로 진정',
-    imageSrc: '/assets/items/stress-ball.png',
+    title: "스트레스 볼",
+    desc: "감정 폭발 전에 손으로 진정",
+    imageSrc: "/assets/items/stress-ball.png",
   },
   motivation: {
-    title: '알람 약통',
-    desc: '미루는 날에도 “시작”을 걸어줘요',
-    imageSrc: '/assets/items/pill.png',
+    title: "알람 약통",
+    desc: "미루는 날에도 “시작”을 걸어줘요",
+    imageSrc: "/assets/items/pill.png",
   },
   environment: {
-    title: '집중 환경 키트',
-    desc: '환경 세팅이 실행을 당겨줘요',
-    imageSrc: '/assets/items/environment.png',
+    title: "집중 환경 키트",
+    desc: "환경 세팅이 실행을 당겨줘요",
+    imageSrc: "/assets/items/environment.png",
   },
 };
 
 const chartConfig = {
-  score: { label: 'Score', color: 'var(--chart-1)' },
+  score: { label: "Score", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
 function QuestionHexagon() {
-  // 테스트 전 “물음표 육각형”
+  // 테스트 전 "물음표 육각형"
   return (
     <div className="relative w-35 h-35">
       <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -78,82 +82,103 @@ function MarketPage() {
   const syncFromBackend = useProgressStore((s) => s.syncFromBackend);
   const navigate = useNavigate();
   const { scores, hasAnyScore, fetchTraits } = useTraitsStore();
+  const {
+    recommendations,
+    topTrait: apiTopTrait,
+    fetchProducts,
+    fetchRecommendations,
+  } = useProductsStore();
 
   // 물뿌리개 구매 상태
   const [isWateringLoading, setIsWateringLoading] = useState(false);
   const [wateringMessage, setWateringMessage] = useState<{
-    type: 'success' | 'error';
+    type: "success" | "error";
     text: string;
   } | null>(null);
 
   // 물뿌리개 구매 핸들러
   const handleWateringCanPurchase = async () => {
-    if (isWateringLoading) return;
+    if (coins < WATERING_CAN_PRICE) {
+      setWateringMessage({ type: "error", text: "코인이 부족해요!" });
+      setTimeout(() => setWateringMessage(null), 3000);
+      return;
+    }
 
     setIsWateringLoading(true);
     setWateringMessage(null);
 
     try {
-      const response = await api.post('/growth/watering-can');
-      const data = response.data;
-
-      if (data.success) {
-        setWateringMessage({
-          type: 'success',
-          text: `+${data.xpGained} XP 획득! 나무가 쑥쑥 자라요!`,
-        });
-        // 백엔드에서 최신 데이터 동기화
-        await syncFromBackend();
-      } else {
-        setWateringMessage({
-          type: 'error',
-          text: data.message || '구매에 실패했습니다.',
-        });
-      }
-    } catch (err: any) {
+      await api.post("/growth/watering-can");
+      await syncFromBackend(); // 코인 & XP 갱신
       setWateringMessage({
-        type: 'error',
-        text: err.response?.data?.message || '코인이 부족합니다.',
+        type: "success",
+        text: "🌱 물뿌리개로 나무에 물을 줬어요! XP +50",
       });
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || "구매에 실패했어요";
+      setWateringMessage({ type: "error", text: msg });
     } finally {
       setIsWateringLoading(false);
-      // 3초 후 메시지 숨기기
       setTimeout(() => setWateringMessage(null), 3000);
     }
   };
 
-  // 페이지 로드 시 성향 점수 가져오기
+  // 페이지 로드 시 데이터 가져오기
   useEffect(() => {
     fetchTraits();
-  }, [fetchTraits]);
+    fetchProducts();
+    fetchRecommendations();
+  }, [fetchTraits, fetchProducts, fetchRecommendations]);
 
   const taken = hasAnyScore();
   const topTrait = useMemo<TraitKey | null>(() => {
+    // API에서 받은 topTrait 우선, 없으면 로컬 계산
+    if (apiTopTrait) return apiTopTrait;
     if (!taken) return null;
     return getTopTrait(scores);
-  }, [taken, scores]);
+  }, [apiTopTrait, taken, scores]);
 
   const chartData = useMemo(() => {
     // Recharts RadarChart는 data 배열 + dataKey 사용
     return [
-      { axis: '집중', score: scores?.attention ?? 0 },
-      { axis: '충동', score: scores?.impulsive ?? 0 },
-      { axis: '복합', score: scores?.complex ?? 0 },
-      { axis: '감정', score: scores?.emotional ?? 0 },
-      { axis: '동기', score: scores?.motivation ?? 0 },
-      { axis: '환경', score: scores?.environment ?? 0 },
+      { axis: "집중", score: scores?.attention ?? 0 },
+      { axis: "충동", score: scores?.impulsive ?? 0 },
+      { axis: "복합", score: scores?.complex ?? 0 },
+      { axis: "감정", score: scores?.emotional ?? 0 },
+      { axis: "동기", score: scores?.motivation ?? 0 },
+      { axis: "환경", score: scores?.environment ?? 0 },
     ];
   }, [scores]);
 
   const topTraitLines = useMemo(() => {
     if (!taken || !topTrait)
       return [
-        '당신의 패턴을 요약해서',
+        "당신의 패턴을 요약해서",
         '"지금 필요한 도구"를 추천해요.',
       ] as const;
 
     return TRAIT_DESCRIPTIONS[topTrait];
   }, [taken, topTrait]);
+
+  // 추천 상품 (API 우선, 없으면 성향 기반 fallback)
+  const recommendedItem = useMemo(() => {
+    if (recommendations[0]) return recommendations[0];
+    if (topTrait && RECOMMENDED_BY_TRAIT[topTrait]) {
+      const fallback = RECOMMENDED_BY_TRAIT[topTrait];
+      return {
+        id: `fallback-${topTrait}`,
+        name: fallback.title,
+        description: fallback.desc,
+        imageUrl: fallback.imageSrc,
+        price: 0,
+        category: "recommendation",
+        recommendedTrait: topTrait,
+        isAvailable: true,
+        isComingSoon: false,
+      };
+    }
+    return null;
+  }, [recommendations, topTrait]);
 
   return (
     <div className="flex flex-col items-center justify-center w-full mt-14">
@@ -168,11 +193,11 @@ function MarketPage() {
       {wateringMessage && (
         <div
           className={[
-            'w-full mt-2 px-4 py-3 rounded-xl text-center text-sm font-medium transition-all',
-            wateringMessage.type === 'success'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700',
-          ].join(' ')}
+            "w-full mt-2 px-4 py-3 rounded-xl text-center text-sm font-medium transition-all",
+            wateringMessage.type === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700",
+          ].join(" ")}
         >
           {wateringMessage.text}
         </div>
@@ -184,16 +209,16 @@ function MarketPage() {
           <ProductCard
             title="체험단 전용 특전"
             imageSrc="/assets/items/gift.png"
-            desc={'체험단 얼리버드 구매 특전: 추가 구성 증정'}
+            desc={"체험단 얼리버드 구매 특전: 추가 구성 증정"}
             price={105}
-            onBuy={() => navigate('/market/order/cartpage')}
+            onBuy={() => navigate("/market/order/cartpage")}
           />
 
           <ProductCard
             title="물뿌리개"
             imageSrc="/assets/items/watering-can.png"
-            desc={'나무 성장 XP를\n더 빨리 올려줘요'}
-            price={15}
+            desc={"나무 성장 XP를\n더 빨리 올려줘요"}
+            price={WATERING_CAN_PRICE}
             onBuy={handleWateringCanPurchase}
             isLoading={isWateringLoading}
           />
@@ -201,28 +226,28 @@ function MarketPage() {
           <ProductCard
             title="전문가 상담권"
             imageSrc="/assets/items/ticket.png"
-            desc={'(준비중) 전문가 상담 서비스'}
+            desc={"(준비중) 전문가 상담 서비스"}
             isComingSoon
           />
 
           <ProductCard
             title="커피 기프티콘"
             imageSrc="/assets/items/coffee.png"
-            desc={'(준비중) 나에게 주는 음료 한 잔'}
+            desc={"(준비중) 나에게 주는 음료 한 잔"}
             isComingSoon
           />
 
           <ProductCard
             title="타이머"
             imageSrc="/assets/items/timer.png"
-            desc={'(준비중) 집중력 향상을 위한\n시간 관리 도구'}
+            desc={"(준비중) 집중력 향상을 위한\n시간 관리 도구"}
             isComingSoon
           />
 
           <ProductCard
             title="알람 약통"
             imageSrc="/assets/items/pill.png"
-            desc={'(준비중) 약 복용을\n절대 놓치지 않게'}
+            desc={"(준비중) 약 복용을\n절대 놓치지 않게"}
             isComingSoon
           />
 
@@ -290,7 +315,7 @@ function MarketPage() {
 
                 {/* 버튼 영역: 육각형 바로 아래 배치 */}
                 <button
-                  onClick={() => navigate('/market/test/branchingtest')}
+                  onClick={() => navigate("/market/test/branchingtest")}
                   className="w-full text-center"
                   type="button"
                 >
@@ -307,9 +332,9 @@ function MarketPage() {
               <div className="flex-1">
                 <div
                   className={[
-                    'text-[12px] leading-relaxed text-[#795549]/70 space-y-2',
-                    !taken ? 'blur-[6px] select-none' : '',
-                  ].join(' ')}
+                    "text-[12px] leading-relaxed text-[#795549]/70 space-y-2",
+                    !taken ? "blur-[6px] select-none" : "",
+                  ].join(" ")}
                 >
                   <div className="space-y-1">
                     {topTraitLines.map((line, i) => (
@@ -330,48 +355,43 @@ function MarketPage() {
           </h3>
 
           <Card className="relative w-32 h-60 p-3">
-            {!taken || !topTrait ? (
+            {!taken || !recommendedItem ? (
               <div className="h-full flex items-center justify-center">
                 <div className="text-4xl">🤔</div>
               </div>
             ) : (
-              (() => {
-                const item = RECOMMENDED_BY_TRAIT[topTrait];
-                return (
-                  <>
-                    {/* 콘텐츠: 위쪽 정렬 + 버튼 자리 확보 */}
-                    <div className="flex flex-col items-center text-center gap-2 pt-1">
-                      <div className="text-[12px] font-semibold text-[#795549]">
-                        {item.title}
-                      </div>
+              <>
+                {/* 콘텐츠: 위쪽 정렬 + 버튼 자리 확보 */}
+                <div className="flex flex-col items-center text-center gap-2 pt-1">
+                  <div className="text-[12px] font-semibold text-[#795549]">
+                    {recommendedItem.name}
+                  </div>
 
-                      <div className="flex flex-col items-center justify-center gap-4 mt-4">
-                        <img
-                          src={item.imageSrc}
-                          alt={item.title}
-                          className="w-14 h-14 object-contain"
-                        />
+                  <div className="flex flex-col items-center justify-center gap-4 mt-4">
+                    <img
+                      src={recommendedItem.imageUrl}
+                      alt={recommendedItem.name}
+                      className="w-14 h-14 object-contain"
+                    />
 
-                        <div className="text-[10px] text-[#795549]/70 leading-snug whitespace-pre-line">
-                          {item.desc}
-                        </div>
-                      </div>
+                    <div className="text-[10px] text-[#795549]/70 leading-snug whitespace-pre-line">
+                      {recommendedItem.description}
                     </div>
+                  </div>
+                </div>
 
-                    {/* 버튼: 카드 하단 고정 (여백 깔끔) */}
-                    <button
-                      type="button"
-                      onClick={() => navigate('/market/order/cartpage')}
-                      className="absolute left-3 right-3 bottom-6 text-[12px] font-semibold text-[#795549]"
-                    >
-                      <div className="inline-block">
-                        <div>보러가기 →</div>
-                        <div className="mt-0.5 h-0.5 w-full bg-[#795549]" />
-                      </div>
-                    </button>
-                  </>
-                );
-              })()
+                {/* 버튼: 카드 하단 고정 (여백 깔끔) */}
+                <button
+                  type="button"
+                  onClick={() => navigate("/market/order/cartpage")}
+                  className="absolute left-3 right-3 bottom-6 text-[12px] font-semibold text-[#795549]"
+                >
+                  <div className="inline-block">
+                    <div>보러가기 →</div>
+                    <div className="mt-0.5 h-0.5 w-full bg-[#795549]" />
+                  </div>
+                </button>
+              </>
             )}
           </Card>
         </div>
@@ -380,7 +400,7 @@ function MarketPage() {
       <section className="w-full mt-7">
         <PrimaryPillButton
           className="w-full text-[13px] font-semibold flex items-center justify-center gap-2"
-          onClick={() => navigate('/growth')}
+          onClick={() => navigate("/growth")}
         >
           <span aria-hidden>🌳</span>
           <span>나무 보러가기 →</span>
