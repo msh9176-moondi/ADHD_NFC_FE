@@ -23,7 +23,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { ROUTINES_META, MOODS } from "@/constants";
-import { getTopTrait, TRAIT_NAMES } from "@/utils/traits";
+import { getTopTrait, TRAIT_NAMES, TRAIT_KEY_MAP } from "@/utils/traits";
 
 const chartConfig = {
   score: { label: "Score", color: "var(--chart-1)" },
@@ -282,6 +282,29 @@ function ProfilePage() {
               </ChartContainer>
             )}
           </Card>
+
+          {/* 성향 상세 리포트 링크 */}
+          {taken && topTrait && (
+            <button
+              type="button"
+              onClick={() => navigate(`/profile/type/${TRAIT_KEY_MAP[topTrait]}`)}
+              className="w-full mt-3 text-left bg-[#F5F0E5] rounded-2xl p-4 shadow-sm border border-[#DBA67A]/30 transition hover:bg-[#EDE5D5]"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[13px] font-semibold text-[#795549]">
+                    {TRAIT_NAMES[topTrait]} 상세 리포트 보기
+                  </div>
+                  <div className="text-[12px] text-[#795549]/70">
+                    맞춤 전략과 실천 방법 확인하기
+                  </div>
+                </div>
+                <span className="text-[#795549]/60 text-lg" aria-hidden>
+                  ›
+                </span>
+              </div>
+            </button>
+          )}
         </section>
 
         {/* 문장/피드백 블록 (더미) */}
@@ -319,7 +342,7 @@ function ProfilePage() {
           <div className="space-y-3">
             <button
               type="button"
-              onClick={() => navigate("/care/ai")}
+              onClick={() => navigate("/profile/report/monthly")}
               className="w-full text-left bg-[#8B6A5A] rounded-2xl p-4 shadow-sm"
             >
               <div className="flex items-center gap-3">
@@ -339,7 +362,7 @@ function ProfilePage() {
 
             <button
               type="button"
-              onClick={() => navigate("/care/expert")}
+              onClick={() => navigate("/coming-soon/expert-report")}
               className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-[#DBA67A]/30"
             >
               <div className="flex items-center gap-3">
@@ -385,7 +408,7 @@ function ProfilePage() {
                 title: "병원 연계 서비스",
                 desc: "FLOCA와 함께하는 진단·상담",
                 icon: "🏥",
-                to: "/partners/clinic",
+                to: "/coming-soon/hospital",
               },
             ].map((it) => (
               <button

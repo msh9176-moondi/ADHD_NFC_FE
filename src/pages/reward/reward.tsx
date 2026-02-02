@@ -27,7 +27,10 @@ function RewardPage() {
 
       // NFC 태그 페이지 접속 → 체크인 시도 (cardUid는 선택사항)
       try {
-        const response = await api.post('/nfc/checkin', cardUid ? { cardUid } : {});
+        const response = await api.post(
+          '/nfc/checkin',
+          cardUid ? { cardUid } : {},
+        );
         const data = response.data;
 
         // 조회수 업데이트 (항상)
@@ -62,17 +65,17 @@ function RewardPage() {
   const cardClass = 'bg-white rounded-xl shadow-sm';
 
   return (
-    <div className="flex-1 flex flex-col justify-center -mt-28 -my-28 ">
-      <div className="flex flex-col gap-10">
+    <div className="flex-1 flex flex-col justify-center px-4 py-6">
+      <div className="flex flex-col gap-6">
         <div
           className={`flex flex-col items-center w-full max-w-md mx-auto gap-4 px-6 py-6`}
         >
           {isLoading ? (
-            <div className="text-[#795549] mt-12">로딩 중...</div>
+            <div className="text-[#795549]">로딩 중...</div>
           ) : coinAwarded ? (
             // 첫 태깅: 코인 획득!
             <>
-              <div className="text-2xl text-[#795549] font-bold mt-12 animate-bounce">
+              <div className="text-2xl text-[#795549] font-bold animate-bounce">
                 코인+15 획득!
               </div>
               <div className="animate-[spin_2s_ease-in-out_1]">
@@ -88,7 +91,7 @@ function RewardPage() {
           ) : receivedToday ? (
             // 이후 태깅: 조회수만 증가
             <>
-              <div className="text-2xl text-[#795549] font-bold mt-12">
+              <div className="text-2xl text-[#795549] font-bold">
                 조회수 +1!
               </div>
               <div className="opacity-70">
@@ -124,9 +127,15 @@ function RewardPage() {
 
         {/* 2) 성장 영역: 카드로 감싸기 */}
         <div
-          className={`flex flex-col items-center justify-center gap-4 mt-12 w-full max-w-md mx-auto py-6`}
+          className={`flex flex-col items-center justify-center gap-4 w-full max-w-md mx-auto py-6`}
         >
-          <img src={growth.asset} alt="" />
+          <div className="w-32 h-32 flex items-center justify-center">
+            <img
+              src={growth.asset}
+              alt=""
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
           <p className="text-[#795549]">{growth.text}</p>
           <div className={`w-full ${cardClass} p-4`}>
             <XpBar level={level} xp={xp} xpToNext={xpToNext} />
@@ -134,7 +143,7 @@ function RewardPage() {
         </div>
 
         {/* CTA */}
-        <section className="w-full -mb-12">
+        <section className="w-full">
           <PrimaryPillButton
             className="w-full text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer"
             onClick={() => navigate('/report')}

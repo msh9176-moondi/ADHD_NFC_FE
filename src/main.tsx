@@ -24,6 +24,7 @@ import EnvironmentTypePage from './pages/market/test/branching questions/Environ
 import ImpulsiveTypePage from './pages/market/test/branching questions/ImpulsiveType.tsx';
 import MotivationalTypePage from './pages/market/test/branching questions/MotivationalType.tsx';
 import ProfilePAge from './pages/profile/Profile.tsx';
+import TypeReportPage from './pages/profile/TypeReportPage.tsx';
 import AiAnalysisPage from './pages/profile/anlysis/AiAnalysis.tsx';
 import ExpertAnalysisPage from './pages/profile/anlysis/ExpertAnalysis.tsx';
 import ExpertProfilePage from './pages/profile/anlysis/ExpertProfile.tsx';
@@ -32,6 +33,7 @@ import RewardPage from './pages/reward/reward.tsx';
 import AttentionTypePage from './pages/market/test/branching questions/AttentionType.tsx';
 import RootLayout from './pages/layout.tsx';
 import AuthLayout from './pages/AuthLayout.tsx';
+import ComingSoonPage from './pages/common/ComingSoon.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -64,6 +66,7 @@ createRoot(document.getElementById('root')!).render(
           {/* profile */}
           <Route path="profile" element={<ProfilePAge />} />
           <Route path="profile/recharge" element={<ProfilePAge />} />
+          <Route path="profile/type/:type" element={<TypeReportPage />} />
 
           {/* Growth */}
           <Route path="growth" element={<GrowthPage />} />
@@ -111,6 +114,7 @@ createRoot(document.getElementById('root')!).render(
 
           {/* analysis */}
           <Route path="profile/ai/anlysis" element={<AiAnalysisPage />} />
+          <Route path="profile/report/monthly" element={<AiAnalysisPage />} />
           <Route
             path="profile/expert/anlysis"
             element={<ExpertAnalysisPage />}
@@ -122,6 +126,10 @@ createRoot(document.getElementById('root')!).render(
 
           {/* Reward */}
           <Route path="reward" element={<RewardPage />} />
+
+          {/* Coming Soon */}
+          <Route path="coming-soon/expert-report" element={<ComingSoonPage />} />
+          <Route path="coming-soon/hospital" element={<ComingSoonPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

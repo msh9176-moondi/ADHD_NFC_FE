@@ -47,6 +47,19 @@ export const TRAIT_NAMES: Record<TraitKey, string> = {
 /**
  * 성향별 설명 텍스트
  */
+/**
+ * TraitKey를 TypeReport URL 경로용 키로 변환
+ * (motivation → motivational 변환 필요)
+ */
+export const TRAIT_KEY_MAP: Record<TraitKey, string> = {
+  attention: 'attention',
+  impulsive: 'impulsive',
+  complex: 'complex',
+  emotional: 'emotional',
+  motivation: 'motivational',
+  environment: 'environment',
+};
+
 export const TRAIT_DESCRIPTIONS: Record<TraitKey, [string, string]> = {
   attention: ['머리는 준비됐는데,', '시작 버튼이 안 눌리는 타입이에요.'],
   impulsive: [

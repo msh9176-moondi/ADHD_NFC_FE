@@ -10,6 +10,7 @@ type ProductCardProps = {
   buttonText?: string;
   className?: string;
   isComingSoon?: boolean;
+  isLoading?: boolean;
 };
 
 function ProductCard({
@@ -21,8 +22,9 @@ function ProductCard({
   buttonText = '구매하기',
   className = '',
   isComingSoon = false,
+  isLoading = false,
 }: ProductCardProps) {
-  const disabled = isComingSoon; // ✅ 이 줄 추가
+  const disabled = isComingSoon || isLoading;
 
   return (
     <Card
@@ -89,7 +91,7 @@ function ProductCard({
         type="button"
         disabled={disabled}
       >
-        {disabled ? '준비중' : buttonText}
+        {isLoading ? '구매 중...' : isComingSoon ? '준비중' : buttonText}
       </PrimaryPillButton>
     </Card>
   );

@@ -64,8 +64,8 @@ function ReportPage() {
       await Promise.all([refreshGrowthData(), refreshTreeData()]);
       console.log('[Report] 데이터 리프레시 완료');
 
-      // 다음 페이지 이동
-      navigate('/market');
+      // 저장 완료 알림
+      alert('오늘의 기록이 저장되었습니다!');
     } catch (error) {
       console.error('[Report] 리포트 저장 실패:', error);
       alert('저장에 실패했습니다. 다시 시도해주세요.');
@@ -218,22 +218,21 @@ function ReportPage() {
         </section>
 
         {/* CTA */}
-        <section className="w-full mt-4">
+        <section className="w-full mt-4 space-y-3">
           <PrimaryPillButton
-            className="w-full text-[13px] font-semibold flex flex-col items-center justify-center py-7 leading-tight"
+            className="w-full text-[13px] font-semibold flex items-center justify-center py-4"
             onClick={handleSubmit}
             disabled={isLoading}
           >
-            {isLoading ? (
-              <span>저장 중...</span>
-            ) : (
-              <>
-                <span>저장하고</span>
-                <span className="-mt-0.5">
-                  <span aria-hidden>🎁</span> 나를 위한 선물 보러가기 →
-                </span>
-              </>
-            )}
+            {isLoading ? '저장 중...' : '저장하기'}
+          </PrimaryPillButton>
+
+          <PrimaryPillButton
+            className="w-full text-[13px] font-semibold flex items-center justify-center gap-2 py-4"
+            onClick={() => navigate('/market')}
+          >
+            <span aria-hidden>🎁</span>
+            <span>나를 위한 선물 보러가기 →</span>
           </PrimaryPillButton>
 
           <p className="text-center text-[12px] text-[#795549]/70 mt-2">

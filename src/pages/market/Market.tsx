@@ -2,7 +2,7 @@ import { ProductCard, PageHeader } from '@/components/common';
 import { PrimaryPillButton } from '@/components/common/PillButton';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from 'recharts';
 import {
   ChartContainer,
@@ -13,6 +13,7 @@ import {
 import { useProgressStore } from '@/store/progress';
 import { useTraitsStore, type TraitKey } from '@/store/traits';
 import { getTopTrait, TRAIT_DESCRIPTIONS } from '@/utils/traits';
+import { api } from '@/lib/api';
 
 type Recommended = {
   title: string;
@@ -74,8 +75,52 @@ function QuestionHexagon() {
 
 function MarketPage() {
   const coins = useProgressStore((s) => s.coins);
+  const syncFromBackend = useProgressStore((s) => s.syncFromBackend);
   const navigate = useNavigate();
   const { scores, hasAnyScore, fetchTraits } = useTraitsStore();
+
+  // 물뿌리개 구매 상태
+  const [isWateringLoading, setIsWateringLoading] = useState(false);
+  const [wateringMessage, setWateringMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // 물뿌리개 구매 핸들러
+  const handleWateringCanPurchase = async () => {
+    if (isWateringLoading) return;
+
+    setIsWateringLoading(true);
+    setWateringMessage(null);
+
+    try {
+      const response = await api.post('/growth/watering-can');
+      const data = response.data;
+
+      if (data.success) {
+        setWateringMessage({
+          type: 'success',
+          text: `+${data.xpGained} XP 획득! 나무가 쑥쑥 자라요!`,
+        });
+        // 백엔드에서 최신 데이터 동기화
+        await syncFromBackend();
+      } else {
+        setWateringMessage({
+          type: 'error',
+          text: data.message || '구매에 실패했습니다.',
+        });
+      }
+    } catch (err: any) {
+      setWateringMessage({
+        type: 'error',
+        text: err.response?.data?.message || '코인이 부족합니다.',
+      });
+    } finally {
+      setIsWateringLoading(false);
+      // 3초 후 메시지 숨기기
+      setTimeout(() => setWateringMessage(null), 3000);
+    }
+  };
 
   // 페이지 로드 시 성향 점수 가져오기
   useEffect(() => {
@@ -119,6 +164,20 @@ function MarketPage() {
         coins={coins}
       />
 
+      {/* 구매 피드백 메시지 */}
+      {wateringMessage && (
+        <div
+          className={[
+            'w-full mt-2 px-4 py-3 rounded-xl text-center text-sm font-medium transition-all',
+            wateringMessage.type === 'success'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700',
+          ].join(' ')}
+        >
+          {wateringMessage.text}
+        </div>
+      )}
+
       {/* 카드 박스 */}
       <section className="w-full mt-2 max-h-160 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
         <div className="grid grid-cols-2 gap-x-4 gap-y-4">
@@ -135,7 +194,8 @@ function MarketPage() {
             imageSrc="/assets/items/watering-can.png"
             desc={'나무 성장 XP를\n더 빨리 올려줘요'}
             price={15}
-            onBuy={() => navigate('/market/order/cartpage')}
+            onBuy={handleWateringCanPurchase}
+            isLoading={isWateringLoading}
           />
 
           <ProductCard

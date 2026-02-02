@@ -65,11 +65,19 @@ export const useProgressStore = create<ProgressState>()(
           const response = await api.get('/growth/tree');
           const { tree } = response.data;
 
+          // 백엔드에서 계산된 레벨과 XP 사용
+          const level = tree.level;
+          const xpToNext = tree.xpToNextLevel;
+          // 현재 레벨 내 진행 XP 계산
+          const progressXp = Math.floor(
+            (tree.progressPercent / 100) * xpToNext
+          );
+
           set({
-            level: tree.level,
-            xp: tree.currentXp,
-            xpToNext: tree.xpToNextLevel,
-            coins: tree.currentXp, // XP = 코인
+            level: level,
+            xp: progressXp,
+            xpToNext: xpToNext,
+            coins: tree.coins, // 별도 코인 필드 사용
             treeStage: tree.treeStage,
             treeStageName: tree.treeStageName,
             isLoading: false,
