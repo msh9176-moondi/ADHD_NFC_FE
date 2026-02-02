@@ -30,23 +30,39 @@ function ReportPage() {
     });
   }, []);
 
-  const [mood, setMood] = useState<MoodKey>('excited');
+  const [mood, setMood] = useState<MoodKey | null>(null);
   const [routineScore, setRoutineScore] = useState<number>(2); // 0~4
   const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [restedToday, setRestedToday] = useState(false);
   const [note, setNote] = useState('');
 
   const card = 'bg-white rounded-xl shadow-sm';
 
   const handleSubmit = async () => {
+    // 빈 상태 검증
+    if (!mood) {
+      alert('오늘의 기분을 선택해주세요.');
+      return;
+    }
+
+    const hasCheckedRoutine = Object.values(checked).some(Boolean);
+    if (!hasCheckedRoutine && !restedToday) {
+      alert('실행한 루틴을 선택하거나, "오늘은 쉬었어요"를 선택해주세요.');
+      return;
+    }
+
     // 체크된 루틴 id 추출
-    const completedRoutineIds = ROUTINES_META.map((r, idx) =>
-      checked[idx] ? r.id : null,
-    ).filter(Boolean) as string[];
+    const completedRoutineIds = restedToday
+      ? []
+      : (ROUTINES_META.map((r, idx) =>
+          checked[idx] ? r.id : null,
+        ).filter(Boolean) as string[]);
 
     console.log('[Report] 저장 시작:', {
       mood,
       routineScore,
       completedRoutineIds,
+      restedToday,
     });
 
     try {
@@ -178,12 +194,14 @@ function ReportPage() {
                 className={[
                   card,
                   'px-4 py-3 flex items-center gap-3 cursor-pointer select-none',
+                  restedToday ? 'opacity-50' : '',
                 ].join(' ')}
               >
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-[#795549]/40 accent-[#795549]"
                   checked={!!checked[idx]}
+                  disabled={restedToday}
                   onChange={(e) =>
                     setChecked((prev) => ({ ...prev, [idx]: e.target.checked }))
                   }
@@ -193,6 +211,32 @@ function ReportPage() {
                 </span>
               </label>
             ))}
+
+            {/* 오늘은 쉬었어요 */}
+            <label
+              className={[
+                card,
+                'px-4 py-3 flex items-center gap-3 cursor-pointer select-none border-2',
+                restedToday
+                  ? 'border-[#DBA67A] bg-[#F5F0E5]'
+                  : 'border-transparent',
+              ].join(' ')}
+            >
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-[#795549]/40 accent-[#795549]"
+                checked={restedToday}
+                onChange={(e) => {
+                  setRestedToday(e.target.checked);
+                  if (e.target.checked) {
+                    setChecked({});
+                  }
+                }}
+              />
+              <span className="text-[13px] font-medium text-[#795549]">
+                오늘은 쉬었어요
+              </span>
+            </label>
           </div>
         </section>
 

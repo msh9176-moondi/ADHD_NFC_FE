@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 function Advertisement() {
   const handlePurchaseClick = () => {
     window.open(
-      'https://msh9176-moondi.github.io/',
+      'https://docs.google.com/forms/d/e/1FAIpQLSeaKGZtvot0w7zUkb7cRCb0h6p1Z8WznEB8450JP4BcSpqvPQ/viewform?usp=dialog',
       '_blank',
       'noopener,noreferrer',
     );
