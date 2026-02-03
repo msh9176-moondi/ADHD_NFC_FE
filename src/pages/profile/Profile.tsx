@@ -8,6 +8,7 @@ import { useTraitsStore } from "@/store/traits";
 import {
   PolarAngleAxis,
   PolarGrid,
+  PolarRadiusAxis,
   Radar,
   RadarChart,
   BarChart,
@@ -271,6 +272,7 @@ function ProfilePage() {
                     content={<ChartTooltipContent />}
                   />
                   <PolarGrid />
+                  <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
                   <PolarAngleAxis dataKey="axis" tick={{ fontSize: 11 }} />
                   <Radar
                     dataKey="score"
