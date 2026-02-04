@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Asterisk } from "lucide-react";
 import { SocialPillButton } from "@/components/common/PillButton";
@@ -37,6 +38,9 @@ function NaverCallbackPage() {
   const [termsOfService, setTermsOfService] = useState(false);
   const [privacyPolicy, setPrivacyPolicy] = useState(false);
   const [marketing, setMarketing] = useState(false);
+
+  // 플래너 번호
+  const [plannerNumber, setPlannerNumber] = useState("");
 
   const allChecked = termsOfService && privacyPolicy && marketing;
   const requiredChecked = termsOfService && privacyPolicy;
@@ -117,6 +121,7 @@ function NaverCallbackPage() {
         email: naverProfile.email,
         nickname: naverProfile.nickname,
         profileImage: naverProfile.profileImage,
+        plannerNumber: plannerNumber || undefined,
         agreements: {
           termsOfService: termsOfService,
           privacyPolicy: privacyPolicy,
@@ -126,6 +131,7 @@ function NaverCallbackPage() {
 
       const { accessToken, user } = response.data;
       useAuthStore.getState().setAuth(accessToken, user);
+      alert("회원가입이 완료되었습니다! 환영합니다 🎉");
       navigate("/growth");
     } catch (err: any) {
       console.error("회원가입 에러:", err);
@@ -175,6 +181,25 @@ function NaverCallbackPage() {
           </p>
           <p className="text-[#795549]/60 text-xs mt-1">
             약관에 동의하시면 회원가입이 완료됩니다.
+          </p>
+        </div>
+
+        {/* 플래너 고유 번호 (선택) */}
+        <div className="w-full mb-6">
+          <div className="flex items-center gap-1 mb-2 pl-4">
+            <label className="text-sm font-bold text-[#795549]">
+              플래너 고유 번호 (선택)
+            </label>
+          </div>
+          <Input
+            type="text"
+            placeholder="#으로 시작하는 플래너 번호"
+            value={plannerNumber}
+            onChange={(e) => setPlannerNumber(e.target.value)}
+            className="w-full h-12 px-4 border-none bg-[#F5F5F5] rounded-full focus-visible:border-[#795549] focus-visible:ring-[#795549]/20 text-[#795549] placeholder:text-[#795549]/50"
+          />
+          <p className="text-[#795549]/60 text-xs mt-1 pl-4">
+            플래너가 있다면 고유 번호를 입력해주세요.
           </p>
         </div>
 

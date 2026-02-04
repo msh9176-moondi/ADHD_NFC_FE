@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '@/lib/api';
-import { Card } from '@/components/ui/card';
-import { PrimaryPillButton } from '@/components/common/PillButton';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api } from "@/lib/api";
+import { Card } from "@/components/ui/card";
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import { cn } from "@/lib/utils";
 
 // Types
 interface ReportSummary {
@@ -60,35 +60,35 @@ interface MonthlyReportResponse {
 
 // 감정 이모지 매핑
 const MOOD_EMOJI: Record<string, string> = {
-  excited: '🤩',
-  calm: '😊',
-  sleepy: '😴',
-  tired: '😣',
-  angry: '😡',
-  anxiety: '😰',
-  joy: '😄',
-  neutral: '😐',
+  excited: "🤩",
+  calm: "😊",
+  sleepy: "😴",
+  tired: "😣",
+  angry: "😡",
+  anxiety: "😰",
+  joy: "😄",
+  neutral: "😐",
 };
 
 // 감정 한글 매핑
 const MOOD_LABEL: Record<string, string> = {
-  excited: '기쁨',
-  calm: '평온',
-  sleepy: '피곤',
-  tired: '무기력',
-  angry: '짜증',
-  anxiety: '불안',
-  joy: '기쁨',
-  neutral: '보통',
+  excited: "기쁨",
+  calm: "평온",
+  sleepy: "피곤",
+  tired: "무기력",
+  angry: "짜증",
+  anxiety: "불안",
+  joy: "기쁨",
+  neutral: "보통",
 };
 
 // 섹션 타이틀 매핑
 const SECTION_TITLES: Record<string, { title: string; emoji: string }> = {
-  emotion_execution: { title: '감정과 실행의 연결', emoji: '🎯' },
-  recovery: { title: '회복 패턴', emoji: '🔄' },
-  language_shift: { title: '언어 변화', emoji: '💬' },
-  retention: { title: '이번 달의 유지력', emoji: '📊' },
-  next_strategy: { title: '다음 달의 전략', emoji: '🚀' },
+  emotion_execution: { title: "감정과 실행의 연결", emoji: "🎯" },
+  recovery: { title: "회복 패턴", emoji: "🔄" },
+  language_shift: { title: "언어 변화", emoji: "💬" },
+  retention: { title: "이번 달의 유지력", emoji: "📊" },
+  next_strategy: { title: "다음 달의 전략", emoji: "🚀" },
 };
 
 function AiAnalysisPage() {
@@ -96,13 +96,13 @@ function AiAnalysisPage() {
   const [report, setReport] = useState<MonthlyReportResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'summary' | 'detail'>('summary');
+  const [activeTab, setActiveTab] = useState<"summary" | "detail">("summary");
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   // 현재 연월 계산
   const getCurrentYearMonth = () => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   };
 
   // 리포트 조회
@@ -116,8 +116,10 @@ function AiAnalysisPage() {
       );
       setReport(response.data);
     } catch (err: any) {
-      console.error('리포트 조회 실패:', err);
-      setError(err.response?.data?.message || '리포트를 불러오는데 실패했습니다.');
+      console.error("리포트 조회 실패:", err);
+      setError(
+        err.response?.data?.message || "리포트를 불러오는데 실패했습니다.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +127,11 @@ function AiAnalysisPage() {
 
   // 리포트 재생성
   const handleRegenerate = async () => {
-    if (!window.confirm('리포트를 새로 생성하시겠습니까?\n(월 3회까지 가능합니다)')) {
+    if (
+      !window.confirm(
+        "리포트를 새로 생성하시겠습니까?\n(월 3회까지 가능합니다)",
+      )
+    ) {
       return;
     }
 
@@ -137,8 +143,8 @@ function AiAnalysisPage() {
       );
       setReport(response.data);
     } catch (err: any) {
-      console.error('리포트 재생성 실패:', err);
-      alert(err.response?.data?.message || '리포트 재생성에 실패했습니다.');
+      console.error("리포트 재생성 실패:", err);
+      alert(err.response?.data?.message || "리포트 재생성에 실패했습니다.");
     } finally {
       setIsRegenerating(false);
     }
@@ -195,7 +201,7 @@ function AiAnalysisPage() {
           <p className="text-sm text-[#795549]/70 mb-4">
             기록을 남기면 AI가 당신의 패턴을 분석해드릴게요.
           </p>
-          <PrimaryPillButton onClick={() => navigate('/report')}>
+          <PrimaryPillButton onClick={() => navigate("/report")}>
             기록하러 가기
           </PrimaryPillButton>
         </div>
@@ -211,7 +217,7 @@ function AiAnalysisPage() {
         {/* 헤더 */}
         <div className="pt-6 pb-4 text-center">
           <h1 className="text-lg font-bold text-[#795549]">
-            {report.yearMonth.replace('-', '년 ')}월 ADHD 패턴 리포트
+            {report.yearMonth.replace("-", "년 ")}월 ADHD 패턴 리포트
           </h1>
           {report.isDataInsufficient && (
             <p className="text-xs text-[#DBA67A] mt-1">
@@ -223,18 +229,22 @@ function AiAnalysisPage() {
         {/* KPI 카드 */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           <Card className="p-3 text-center bg-white rounded-xl shadow-sm">
-            <div className="text-2xl font-bold text-[#795549]">{stats.recordDays}</div>
+            <div className="text-2xl font-bold text-[#795549]">
+              {stats.recordDays}
+            </div>
             <div className="text-xs text-[#795549]/70">기록 일수</div>
           </Card>
           <Card className="p-3 text-center bg-white rounded-xl shadow-sm">
-            <div className="text-2xl font-bold text-[#795549]">{stats.avgCompletionRate}%</div>
+            <div className="text-2xl font-bold text-[#795549]">
+              {stats.avgCompletionRate}%
+            </div>
             <div className="text-xs text-[#795549]/70">평균 이행률</div>
           </Card>
           <Card className="p-3 text-center bg-white rounded-xl shadow-sm">
             <div className="text-lg">
               {stats.topMoods.slice(0, 2).map((m) => (
                 <span key={m.mood} title={MOOD_LABEL[m.mood] || m.mood}>
-                  {MOOD_EMOJI[m.mood] || '😐'}
+                  {MOOD_EMOJI[m.mood] || "😐"}
                 </span>
               ))}
             </div>
@@ -245,23 +255,23 @@ function AiAnalysisPage() {
         {/* 탭 */}
         <div className="flex gap-2 mb-4">
           <button
-            onClick={() => setActiveTab('summary')}
+            onClick={() => setActiveTab("summary")}
             className={cn(
-              'flex-1 py-2 rounded-full text-sm font-medium transition-all',
-              activeTab === 'summary'
-                ? 'bg-[#795549] text-white'
-                : 'bg-[#EFDDC3] text-[#795549]',
+              "flex-1 py-2 rounded-full text-sm font-medium transition-all cursor-pointer",
+              activeTab === "summary"
+                ? "bg-[#795549] text-white"
+                : "bg-[#EFDDC3] text-[#795549]",
             )}
           >
             요약
           </button>
           <button
-            onClick={() => setActiveTab('detail')}
+            onClick={() => setActiveTab("detail")}
             className={cn(
-              'flex-1 py-2 rounded-full text-sm font-medium transition-all',
-              activeTab === 'detail'
-                ? 'bg-[#795549] text-white'
-                : 'bg-[#EFDDC3] text-[#795549]',
+              "flex-1 py-2 rounded-full text-sm font-medium transition-all cursor-pointer",
+              activeTab === "detail"
+                ? "bg-[#795549] text-white"
+                : "bg-[#EFDDC3] text-[#795549]",
             )}
           >
             상세
@@ -273,7 +283,7 @@ function AiAnalysisPage() {
           {Object.entries(SECTION_TITLES).map(([key, { title, emoji }]) => {
             const sectionKey = key as keyof ReportSummary;
 
-            if (activeTab === 'summary' && summary) {
+            if (activeTab === "summary" && summary) {
               return (
                 <Card key={key} className="p-4 bg-white rounded-xl shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
@@ -287,7 +297,7 @@ function AiAnalysisPage() {
               );
             }
 
-            if (activeTab === 'detail' && detail) {
+            if (activeTab === "detail" && detail) {
               const section = detail[sectionKey];
               return (
                 <Card key={key} className="p-4 bg-white rounded-xl shadow-sm">
@@ -300,7 +310,9 @@ function AiAnalysisPage() {
                   </p>
                   {section.actions && section.actions.length > 0 && (
                     <div className="border-t border-[#EFDDC3] pt-3">
-                      <p className="text-xs font-medium text-[#DBA67A] mb-2">추천 액션</p>
+                      <p className="text-xs font-medium text-[#DBA67A] mb-2">
+                        추천 액션
+                      </p>
                       <ul className="space-y-1">
                         {section.actions.map((action, idx) => (
                           <li
@@ -326,7 +338,7 @@ function AiAnalysisPage() {
         <div className="mt-8 space-y-3">
           <PrimaryPillButton
             className="w-full"
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate("/profile")}
           >
             완료 →
           </PrimaryPillButton>
@@ -335,14 +347,14 @@ function AiAnalysisPage() {
             onClick={handleRegenerate}
             disabled={isRegenerating || report.regenerateRemaining <= 0}
             className={cn(
-              'w-full py-3 rounded-full text-sm font-medium transition-all',
-              'bg-white border border-[#DBA67A]/30 text-[#795549]',
-              'hover:bg-[#F5F0E5]',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
+              "w-full py-3 rounded-full text-sm font-medium transition-all cursor-pointer",
+              "bg-white border border-[#DBA67A]/30 text-[#795549]",
+              "hover:bg-[#F5F0E5]",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
           >
             {isRegenerating ? (
-              '재생성 중...'
+              "재생성 중..."
             ) : (
               <>재생성 (남은 횟수: {report.regenerateRemaining}회)</>
             )}
@@ -352,7 +364,8 @@ function AiAnalysisPage() {
         {/* 생성 정보 */}
         <p className="text-center text-xs text-[#795549]/50 mt-4">
           {report.model && `AI: ${report.model} | `}
-          마지막 업데이트: {new Date(report.updatedAt).toLocaleDateString('ko-KR')}
+          마지막 업데이트:{" "}
+          {new Date(report.updatedAt).toLocaleDateString("ko-KR")}
         </p>
       </div>
     </div>

@@ -38,6 +38,7 @@ export interface SignupRequest {
   agreeTermsOfService: boolean;
   agreePrivacyPolicy: boolean;
   agreeMarketing: boolean;
+  plannerNumber?: string;
 }
 
 // 회원가입 응답 타입
