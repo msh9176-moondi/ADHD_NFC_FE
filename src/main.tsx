@@ -34,6 +34,11 @@ import AttentionTypePage from './pages/market/test/branching questions/Attention
 import RootLayout from './pages/layout.tsx';
 import AuthLayout from './pages/AuthLayout.tsx';
 import ComingSoonPage from './pages/common/ComingSoon.tsx';
+import AdminLayout from './pages/admin/AdminLayout.tsx';
+import AdminDashboardPage from './pages/admin/AdminDashboard.tsx';
+import AdminUsersPage from './pages/admin/AdminUsers.tsx';
+import AdminProductsPage from './pages/admin/AdminProducts.tsx';
+import AdminRoutinesPage from './pages/admin/AdminRoutines.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -130,6 +135,14 @@ createRoot(document.getElementById('root')!).render(
           {/* Coming Soon */}
           <Route path="coming-soon/expert-report" element={<ComingSoonPage />} />
           <Route path="coming-soon/hospital" element={<ComingSoonPage />} />
+        </Route>
+
+        {/* ✅ Admin: 관리자 패널 (ADMIN 권한 필요) */}
+        <Route element={<AdminLayout />}>
+          <Route path="admin" element={<AdminDashboardPage />} />
+          <Route path="admin/users" element={<AdminUsersPage />} />
+          <Route path="admin/products" element={<AdminProductsPage />} />
+          <Route path="admin/routines" element={<AdminRoutinesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
