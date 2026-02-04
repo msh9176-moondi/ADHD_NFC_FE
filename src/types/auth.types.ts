@@ -2,7 +2,7 @@
 export interface User {
   id: string;
   email: string;
-  role: "user" | "expert" | "admin";
+  role: "USER" | "EXPERT" | "ADMIN" | "SELLER";
   profile?: {
     nickname?: string;
     name?: string;

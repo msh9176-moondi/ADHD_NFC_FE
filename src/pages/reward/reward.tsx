@@ -1,10 +1,10 @@
-import { PrimaryPillButton } from '@/components/common/PillButton';
-import XpBar from '@/components/common/XpBar';
-import { api } from '@/lib/api';
-import { useProgressStore } from '@/store/progress';
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getGrowthStage } from '@/utils/traits';
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import XpBar from "@/components/common/XpBar";
+import { api } from "@/lib/api";
+import { useProgressStore } from "@/store/progress";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { getGrowthStage } from "@/utils/traits";
 
 function RewardPage() {
   const { level, xp, xpToNext, syncFromBackend } = useProgressStore();
@@ -16,39 +16,39 @@ function RewardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [totalTagCount, setTotalTagCount] = useState(0);
   const [coinAwarded, setCoinAwarded] = useState(false);
+  const isProcessingRef = useRef(false);
 
   // URL에서 cardUid 파라미터 확인 (NFC 태그에서 전달)
-  const cardUid = searchParams.get('cardUid');
+  const cardUid = searchParams.get("cardUid");
 
   useEffect(() => {
+    // StrictMode에서 중복 실행 방지
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     const processNfcReward = async () => {
       // 먼저 백엔드에서 현재 데이터 동기화
       await syncFromBackend();
 
-      // NFC 태그 페이지 접속 → 체크인 시도 (cardUid는 선택사항)
+      // 페이지 방문할 때마다 체크인 (조회수 +1)
       try {
         const response = await api.post(
-          '/nfc/checkin',
+          "/nfc/checkin",
           cardUid ? { cardUid } : {},
         );
         const data = response.data;
 
-        // 조회수 업데이트 (항상)
         setTotalTagCount(data.totalTagCount || 0);
-
-        // 이번 태깅에서 코인을 받았는지
         setCoinAwarded(!data.alreadyCheckedIn && data.success);
         setReceivedToday(data.alreadyCheckedIn || data.success);
 
         if (data.success && !data.alreadyCheckedIn) {
-          // 백엔드에서 보상 지급됨 → 다시 동기화해서 최신 데이터 반영
           await syncFromBackend();
         }
       } catch (error: any) {
-        console.error('NFC 보상 처리 실패:', error);
-        // 오늘 이미 받았는지 확인
+        console.error("NFC 보상 처리 실패:", error);
         try {
-          const statusRes = await api.get('/nfc/checkin/status');
+          const statusRes = await api.get("/nfc/checkin/status");
           setReceivedToday(statusRes.data.checkedInToday);
           setTotalTagCount(statusRes.data.totalTagCount || 0);
         } catch {
@@ -62,7 +62,7 @@ function RewardPage() {
   }, [cardUid, syncFromBackend]);
 
   // report 카드 효과 스타일
-  const cardClass = 'bg-white rounded-xl shadow-sm';
+  const cardClass = "bg-white rounded-xl shadow-sm";
 
   return (
     <div className="flex-1 flex flex-col justify-center px-4 py-6">
@@ -73,7 +73,7 @@ function RewardPage() {
           {isLoading ? (
             <div className="text-[#795549]">로딩 중...</div>
           ) : coinAwarded ? (
-            // 첫 태깅: 코인 획득!
+            // NFC 태그로 코인 획득!
             <>
               <div className="text-2xl text-[#795549] font-bold animate-bounce">
                 코인+15 획득!
@@ -89,7 +89,7 @@ function RewardPage() {
               </div>
             </>
           ) : receivedToday ? (
-            // 이후 태깅: 조회수만 증가
+            // 이미 오늘 코인 받음 → 조회수만 증가
             <>
               <div className="text-2xl text-[#795549] font-bold">
                 조회수 +1!
@@ -105,7 +105,7 @@ function RewardPage() {
               </div>
             </>
           ) : (
-            // 태깅 전
+            // 아직 체크인 안함
             <>
               <div className="text-2xl text-[#795549] font-bold animate-bounce">
                 오늘의 보상
@@ -146,7 +146,7 @@ function RewardPage() {
         <section className="w-full">
           <PrimaryPillButton
             className="w-full text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer"
-            onClick={() => navigate('/report')}
+            onClick={() => navigate("/report")}
           >
             <span aria-hidden>✏️</span>
             <span>기록하러 가기 →</span>

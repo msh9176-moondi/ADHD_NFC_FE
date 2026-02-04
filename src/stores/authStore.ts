@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { api } from "@/lib/api";
+import { useProgressStore } from "@/store/progress";
 import type {
   User,
   LoginRequest,
@@ -60,6 +61,10 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          // 로그인 성공 후 progress 데이터 백엔드 동기화
+          useProgressStore.getState().reset();
+          useProgressStore.getState().syncFromBackend();
         } catch (error: any) {
           const message =
             error.response?.data?.message || "로그인에 실패했습니다.";
@@ -80,6 +85,10 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          // 회원가입 성공 후 progress 데이터 초기화 및 동기화
+          useProgressStore.getState().reset();
+          useProgressStore.getState().syncFromBackend();
         } catch (error: any) {
           const message =
             error.response?.data?.message || "회원가입에 실패했습니다.";
@@ -110,6 +119,11 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          // 소셜 로그인 성공 후 progress 데이터 초기화 및 동기화
+          useProgressStore.getState().reset();
+          useProgressStore.getState().syncFromBackend();
+
           return { needsSignup: false };
         } catch (error: any) {
           const message =
@@ -134,6 +148,10 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+
+          // 소셜 회원가입 완료 후 progress 데이터 초기화 및 동기화
+          useProgressStore.getState().reset();
+          useProgressStore.getState().syncFromBackend();
         } catch (error: any) {
           const message =
             error.response?.data?.message || "회원가입 완료에 실패했습니다.";
@@ -144,6 +162,9 @@ export const useAuthStore = create<AuthState>()(
 
       // 로그아웃
       logout: () => {
+        // progress 스토어 초기화 (XP, 코인 등 로컬 캐시 삭제)
+        useProgressStore.getState().reset();
+
         set({
           accessToken: null,
           user: null,
@@ -234,6 +255,10 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
           error: null,
         });
+
+        // 인증 설정 후 progress 데이터 초기화 및 동기화
+        useProgressStore.getState().reset();
+        useProgressStore.getState().syncFromBackend();
       },
 
       // 에러 초기화

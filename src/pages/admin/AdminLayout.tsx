@@ -23,12 +23,12 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') {
+    if (!isAuthenticated || user?.role !== 'ADMIN') {
       navigate('/');
     }
   }, [isAuthenticated, user?.role, navigate]);
 
-  if (!isAuthenticated || user?.role !== 'admin') return null;
+  if (!isAuthenticated || user?.role !== 'ADMIN') return null;
 
   return (
     <div className="min-h-screen flex bg-[#F5F0E5]">
