@@ -244,8 +244,8 @@ function MarketPage() {
         </div>
       )}
 
-      {/* 카드 박스 */}
-      <section className="w-full mt-2 max-h-160 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
+      {/* 카드 박스 - 모바일에서 고정 높이로 독립 스크롤 */}
+      <section className="w-full mt-2 h-[280px] md:h-auto md:max-h-160 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
         <div className="grid grid-cols-2 gap-x-4 gap-y-4">
           <ProductCard
             title="체험단 전용 특전"
@@ -297,23 +297,23 @@ function MarketPage() {
       </section>
 
       {/* 성향 테스트 */}
-      <section className="flex items-center justify-center w-full gap-4 mt-4">
+      <section className="flex items-center justify-center w-full gap-3 mt-4 px-1">
         <div className="flex-1 flex flex-col">
           <h3 className="text-[14px] font-semibold text-[#795549] pb-1">
             당신의 ADHD성향
           </h3>
-          <Card className="w-full h-60 p-4">
-            <div className="flex items-center justify-center gap-6">
+          <Card className="w-full h-60 p-3 md:p-4">
+            <div className="flex items-center justify-center gap-2 md:gap-6">
               {/* 왼쪽: 육각형 + 버튼을 세로로 묶은 영역 */}
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-2 md:gap-3">
                 {/* 육각형 영역 */}
-                <div className="w-40 flex items-center justify-center">
+                <div className="w-28 md:w-40 flex items-center justify-center">
                   {!taken ? (
                     <QuestionHexagon />
                   ) : (
                     <ChartContainer
                       config={chartConfig}
-                      className="mx-auto aspect-square max-h-40 w-40"
+                      className="mx-auto aspect-square max-h-28 w-28 md:max-h-40 md:w-40"
                     >
                       <RadarChart
                         data={chartData}
@@ -395,7 +395,7 @@ function MarketPage() {
             추천 아이템
           </h3>
 
-          <Card className="relative w-32 h-60 p-3">
+          <Card className="relative w-24 md:w-32 h-60 p-2 md:p-3">
             {!taken || !recommendedItem ? (
               <div className="h-full flex items-center justify-center">
                 <div className="text-4xl">🤔</div>
