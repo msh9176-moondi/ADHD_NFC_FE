@@ -1,8 +1,27 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { PrimaryPillButton } from '@/components/common/PillButton';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function SplashPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  // 로그인된 유저면 바로 reward 페이지로 이동
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/reward', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // 로딩 중이면 로딩 표시
+  if (isLoading) {
+    return (
+      <div className="flex-1 w-full min-h-screen flex items-center justify-center bg-[#F5F1EB]">
+        <div className="text-[#795549]">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     // RootLayout의 main이 이미 flex-1이므로, 여기서는 100vh 잡지 말고 flex-1로만
