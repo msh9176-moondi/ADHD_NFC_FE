@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { PrimaryPillButton } from "@/components/common/PillButton";
 import { cn } from "@/lib/utils";
@@ -110,44 +110,113 @@ function AiAnalysisPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError("로그인이 필요합니다.");
+        setIsLoading(false);
+        return;
+      }
+
       const yearMonth = getCurrentYearMonth();
-      const response = await api.get<MonthlyReportResponse>(
-        `/reports/monthly?yearMonth=${yearMonth}`,
-      );
-      setReport(response.data);
+
+      // ai_monthly_reports 테이블에서 조회
+      const { data: reportData, error: reportError } = await supabase
+        .from('ai_monthly_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('year_month', yearMonth)
+        .single();
+
+      if (reportError && reportError.code !== 'PGRST116') {
+        // PGRST116 = no rows found (정상적인 경우)
+        throw reportError;
+      }
+
+      // daily_logs에서 이번 달 통계 계산
+      const startOfMonth = `${yearMonth}-01`;
+      const endOfMonth = new Date(parseInt(yearMonth.split('-')[0]), parseInt(yearMonth.split('-')[1]), 0).toISOString().split('T')[0];
+
+      const { data: logsData } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('date', startOfMonth)
+        .lte('date', endOfMonth);
+
+      const logs = logsData || [];
+      const recordDays = logs.length;
+
+      // 감정 분포 계산
+      const moodCounts: Record<string, number> = {};
+      logs.forEach(log => {
+        moodCounts[log.mood] = (moodCounts[log.mood] || 0) + 1;
+      });
+
+      const topMoods = Object.entries(moodCounts)
+        .map(([mood, count]) => ({
+          mood,
+          count,
+          percentage: recordDays > 0 ? Math.round((count / recordDays) * 100) : 0
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+
+      // 평균 완료율 계산
+      const avgCompletionRate = logs.length > 0
+        ? Math.round(logs.reduce((sum, log) => sum + (log.routine_score || 0), 0) / logs.length)
+        : 0;
+
+      const stats: ReportStats = {
+        recordDays,
+        avgCompletionRate,
+        topMoods,
+        moodDistribution: moodCounts,
+        recoveryRate: 0,
+        languageShift: {
+          selfBlame: { first: 0, second: 0 },
+          acceptance: { first: 0, second: 0 },
+        },
+      };
+
+      if (reportData) {
+        setReport({
+          id: reportData.id,
+          yearMonth: reportData.year_month,
+          summary: reportData.summary_json as ReportSummary | null,
+          detail: reportData.detail_json as ReportDetail | null,
+          stats,
+          model: reportData.model,
+          createdAt: reportData.created_at,
+          updatedAt: reportData.updated_at,
+          regenerateRemaining: Math.max(0, 3 - (reportData.regenerate_count || 0)),
+          isDataInsufficient: recordDays < 7,
+        });
+      } else {
+        // 리포트가 없으면 stats만 있는 상태로 설정
+        setReport({
+          id: '',
+          yearMonth,
+          summary: null,
+          detail: null,
+          stats,
+          model: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          regenerateRemaining: 3,
+          isDataInsufficient: recordDays < 7,
+        });
+      }
     } catch (err: any) {
       console.error("리포트 조회 실패:", err);
-      setError(
-        err.response?.data?.message || "리포트를 불러오는데 실패했습니다.",
-      );
+      setError("리포트를 불러오는데 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 리포트 재생성
+  // 리포트 재생성 (현재 비활성화 - AI 서버 연동 필요)
   const handleRegenerate = async () => {
-    if (
-      !window.confirm(
-        "리포트를 새로 생성하시겠습니까?\n(월 3회까지 가능합니다)",
-      )
-    ) {
-      return;
-    }
-
-    setIsRegenerating(true);
-    try {
-      const yearMonth = getCurrentYearMonth();
-      const response = await api.post<MonthlyReportResponse>(
-        `/reports/monthly/regenerate?yearMonth=${yearMonth}`,
-      );
-      setReport(response.data);
-    } catch (err: any) {
-      console.error("리포트 재생성 실패:", err);
-      alert(err.response?.data?.message || "리포트 재생성에 실패했습니다.");
-    } finally {
-      setIsRegenerating(false);
-    }
+    alert("AI 리포트 생성 기능은 준비 중입니다.");
   };
 
   useEffect(() => {
