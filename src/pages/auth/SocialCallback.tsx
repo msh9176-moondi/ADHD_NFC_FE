@@ -1,38 +1,24 @@
-import { useEffect, useState, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore";
-import { api } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore, type AppUser } from "@/stores/authStore";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Asterisk } from "lucide-react";
 import { SocialPillButton } from "@/components/common/PillButton";
 
-interface GoogleProfile {
-  id: string;
-  email?: string;
-  nickname?: string;
-  profileImage?: string;
+type Step = "loading" | "agreement" | "processing";
+
+interface SocialCallbackProps {
+  providerName: string;
 }
 
-interface GoogleCallbackResponse {
-  needsSignup: boolean;
-  socialProfile?: GoogleProfile;
-  provider?: string;
-  socialAccessToken?: string;
-  accessToken?: string;
-  user?: any;
-}
-
-function GoogleCallbackPage() {
+function SocialCallbackPage({ providerName }: SocialCallbackProps) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<"loading" | "agreement" | "processing">("loading");
-  const isProcessing = useRef(false);
-
-  // 구글 프로필 정보
-  const [googleProfile, setGoogleProfile] = useState<GoogleProfile | null>(null);
-  const [socialAccessToken, setSocialAccessToken] = useState<string>("");
+  const [step, setStep] = useState<Step>("loading");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // 약관 동의 상태
   const [termsOfService, setTermsOfService] = useState(false);
@@ -52,54 +38,58 @@ function GoogleCallbackPage() {
   };
 
   useEffect(() => {
-    if (isProcessing.current) return;
-    isProcessing.current = true;
-
-    const code = searchParams.get("code");
-    const errorParam = searchParams.get("error");
-
-    if (errorParam) {
-      setError("구글 로그인이 취소되었습니다.");
-      setTimeout(() => navigate("/auth/splash/login"), 2000);
-      return;
-    }
-
-    if (!code) {
-      setError("인증 코드가 없습니다.");
-      setTimeout(() => navigate("/auth/splash/login"), 2000);
-      return;
-    }
-
-    const handleGoogleCallback = async () => {
+    const handleCallback = async () => {
       try {
-        const response = await api.post<GoogleCallbackResponse>("/auth/google/callback", { code });
-        console.log("구글 로그인 응답:", response.data);
+        // Supabase OAuth 콜백 처리 (URL에서 토큰 추출)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-        if (response.data.needsSignup) {
-          // 신규 유저: 동의 화면 표시
-          const { socialProfile, socialAccessToken: token } = response.data;
-          if (socialProfile && token) {
-            setGoogleProfile(socialProfile);
-            setSocialAccessToken(token);
-            setStep("agreement");
-          }
+        if (sessionError) throw sessionError;
+
+        if (!session?.user) {
+          // 세션이 없으면 에러
+          setError("인증에 실패했습니다.");
+          setTimeout(() => navigate("/auth/splash/login"), 2000);
+          return;
+        }
+
+        const user = session.user;
+        setUserId(user.id);
+        setUserEmail(user.email || null);
+
+        // users 테이블에 사용자 정보가 있는지 확인
+        const { data: existingUser, error: fetchError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (fetchError && fetchError.code !== "PGRST116") {
+          // PGRST116 = no rows returned (신규 사용자)
+          throw fetchError;
+        }
+
+        if (existingUser) {
+          // 기존 사용자: 바로 로그인 처리
+          useAuthStore.setState({
+            supabaseUser: user,
+            user: existingUser as AppUser,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          navigate("/reward");
         } else {
-          // 기존 유저: 바로 로그인 처리
-          const { accessToken, user } = response.data;
-          if (accessToken && user) {
-            useAuthStore.getState().setAuth(accessToken, user);
-            navigate("/growth");
-          }
+          // 신규 사용자: 약관 동의 화면 표시
+          setStep("agreement");
         }
       } catch (err: any) {
-        console.error("구글 로그인 에러:", err);
-        setError(err.response?.data?.message || "구글 로그인에 실패했습니다.");
+        console.error(`${providerName} 로그인 에러:`, err);
+        setError(err.message || `${providerName} 로그인에 실패했습니다.`);
         setTimeout(() => navigate("/auth/splash/login"), 2000);
       }
     };
 
-    handleGoogleCallback();
-  }, [searchParams, navigate]);
+    handleCallback();
+  }, [navigate, providerName]);
 
   // 동의하기 버튼 클릭
   const handleAgree = async () => {
@@ -108,39 +98,61 @@ function GoogleCallbackPage() {
       return;
     }
 
-    if (!googleProfile) return;
+    if (!userId) return;
 
     setStep("processing");
 
     try {
-      const response = await api.post("/auth/social-signup", {
-        provider: "google",
-        providerId: googleProfile.id,
-        socialAccessToken: socialAccessToken,
-        email: googleProfile.email,
-        nickname: googleProfile.nickname,
-        profileImage: googleProfile.profileImage,
-        plannerNumber: plannerNumber || undefined,
-        agreements: {
-          termsOfService: termsOfService,
-          privacyPolicy: privacyPolicy,
-          marketing: marketing,
-        },
+      // users 테이블에 사용자 정보 저장
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert({
+          id: userId,
+          email: userEmail,
+          planner_number: plannerNumber || null,
+        });
+
+      if (insertError) throw insertError;
+
+      // 약관 동의 저장
+      const agreements = [
+        { user_id: userId, type: "terms_of_service", is_agreed: termsOfService, agreed_at: new Date().toISOString() },
+        { user_id: userId, type: "privacy_policy", is_agreed: privacyPolicy, agreed_at: new Date().toISOString() },
+        { user_id: userId, type: "marketing", is_agreed: marketing, agreed_at: new Date().toISOString() },
+      ];
+
+      await supabase.from("user_agreements").insert(agreements);
+
+      // 생성된 사용자 정보 조회
+      const { data: userData, error: fetchError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+
+      useAuthStore.setState({
+        supabaseUser: supabaseUser,
+        user: userData as AppUser,
+        isAuthenticated: true,
+        isLoading: false,
       });
 
-      const { accessToken, user } = response.data;
-      useAuthStore.getState().setAuth(accessToken, user);
-      alert("회원가입이 완료되었습니다! 환영합니다 🎉");
-      navigate("/growth");
+      alert("회원가입이 완료되었습니다!");
+      navigate("/reward");
     } catch (err: any) {
       console.error("회원가입 에러:", err);
-      setError(err.response?.data?.message || "회원가입에 실패했습니다.");
+      setError(err.message || "회원가입에 실패했습니다.");
       setStep("agreement");
     }
   };
 
   // 취소 버튼 클릭
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    await supabase.auth.signOut();
     navigate("/auth/splash/login");
   };
 
@@ -159,7 +171,7 @@ function GoogleCallbackPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="text-[#795549] text-lg">
-          {step === "loading" ? "구글 로그인 처리 중..." : "회원가입 처리 중..."}
+          {step === "loading" ? `${providerName} 로그인 처리 중...` : "회원가입 처리 중..."}
         </div>
         <div className="mt-4 w-8 h-8 border-4 border-[#795549] border-t-transparent rounded-full animate-spin" />
       </div>
@@ -176,7 +188,7 @@ function GoogleCallbackPage() {
         {/* 소셜 회원가입 안내 */}
         <div className="w-full mb-6 p-4 bg-[#F5F5F5] rounded-2xl text-center">
           <p className="text-[#795549] text-sm">
-            <span className="font-bold">구글</span> 계정으로 회원가입합니다.
+            <span className="font-bold">{providerName}</span> 계정으로 회원가입합니다.
           </p>
           <p className="text-[#795549]/60 text-xs mt-1">
             약관에 동의하시면 회원가입이 완료됩니다.
@@ -288,4 +300,17 @@ function GoogleCallbackPage() {
   );
 }
 
-export default GoogleCallbackPage;
+// 각 Provider별 컴포넌트
+export function GoogleCallbackPage() {
+  return <SocialCallbackPage providerName="구글" />;
+}
+
+export function KakaoCallbackPage() {
+  return <SocialCallbackPage providerName="카카오" />;
+}
+
+export function NaverCallbackPage() {
+  return <SocialCallbackPage providerName="네이버" />;
+}
+
+export default SocialCallbackPage;

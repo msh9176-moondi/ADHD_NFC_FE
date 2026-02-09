@@ -37,7 +37,7 @@ function ForgotPasswordPage() {
     clearError();
 
     try {
-      await forgotPassword({ email: data.email });
+      await forgotPassword(data.email);
       setSubmittedEmail(data.email);
       setIsSubmitted(true);
     } catch {

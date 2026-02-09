@@ -1,26 +1,8 @@
 import { create } from 'zustand';
-import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 // 통계 데이터 전용 스토어 (루틴 랭킹, 스트릭, 감정 기록)
 // 나무 데이터(level, xp)는 progress.ts에서 관리
-
-interface DailyLogsStatsResponse {
-  stats: {
-    routineRanking: Array<{ routineId: string; count: number }>;
-    totalExecutions: number;
-    currentStreak: number;
-    longestStreak: number;
-    totalDays: number;
-  };
-}
-
-interface DailyLogsListResponse {
-  logs: Array<{
-    id: string;
-    mood: string;
-    date: string;
-  }>;
-}
 
 interface GrowthState {
   // 통계 데이터
@@ -55,21 +37,85 @@ export const useGrowthStore = create<GrowthState>((set, get) => ({
   // 통계 데이터 가져오기
   fetchStats: async () => {
     try {
-      console.log('[Growth Store] fetchStats 호출');
-      const response = await api.get<DailyLogsStatsResponse>('/daily-logs/stats');
-      console.log('[Growth Store] API 응답 전체:', response.data);
-      const { stats } = response.data;
-      console.log('[Growth Store] 통계 데이터 수신:', stats);
-      console.log('[Growth Store] routineRanking:', stats.routineRanking);
-      console.log('[Growth Store] totalExecutions:', stats.totalExecutions);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 모든 daily_logs 가져오기
+      const { data: logs, error } = await supabase
+        .from('daily_logs')
+        .select('date, completed_routines')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      if (!logs || logs.length === 0) {
+        set({
+          routineRanking: [],
+          totalExecutions: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          totalDays: 0,
+        });
+        return;
+      }
+
+      // 루틴 랭킹 계산
+      const routineCounts: Record<string, number> = {};
+      let totalExecutions = 0;
+
+      for (const log of logs) {
+        const routines = log.completed_routines || [];
+        for (const routineId of routines) {
+          routineCounts[routineId] = (routineCounts[routineId] || 0) + 1;
+          totalExecutions++;
+        }
+      }
+
+      const routineRanking = Object.entries(routineCounts)
+        .map(([routineId, count]) => ({ routineId, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // 스트릭 계산
+      const dates = logs.map(log => log.date).sort();
+      const totalDays = dates.length;
+
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let tempStreak = 1;
+
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      // 연속 기록 계산
+      for (let i = 1; i < dates.length; i++) {
+        const prevDate = new Date(dates[i - 1]);
+        const currDate = new Date(dates[i]);
+        const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / 86400000);
+
+        if (diffDays === 1) {
+          tempStreak++;
+        } else {
+          longestStreak = Math.max(longestStreak, tempStreak);
+          tempStreak = 1;
+        }
+      }
+      longestStreak = Math.max(longestStreak, tempStreak);
+
+      // 현재 스트릭 (오늘 또는 어제부터 시작)
+      const lastDate = dates[dates.length - 1];
+      if (lastDate === today || lastDate === yesterday) {
+        currentStreak = tempStreak;
+      }
+
       set({
-        routineRanking: stats.routineRanking || [],
-        totalExecutions: stats.totalExecutions || 0,
-        currentStreak: stats.currentStreak || 0,
-        longestStreak: stats.longestStreak || 0,
-        totalDays: stats.totalDays || 0,
+        routineRanking,
+        totalExecutions,
+        currentStreak,
+        longestStreak,
+        totalDays,
       });
-      console.log('[Growth Store] 스토어 업데이트 완료');
     } catch (error) {
       console.error('[Growth Store] 통계 데이터 로드 실패:', error);
     }
@@ -78,17 +124,30 @@ export const useGrowthStore = create<GrowthState>((set, get) => ({
   // 감정 기록 가져오기 (이번 달)
   fetchMoodLogs: async () => {
     try {
-      console.log('[Growth Store] fetchMoodLogs 호출');
-      const response = await api.get<DailyLogsListResponse>('/daily-logs', {
-        params: { limit: 31 },
-      });
-      console.log('[Growth Store] 일일 로그 API 응답:', response.data);
-      const { logs } = response.data;
-      console.log('[Growth Store] 감정 기록 수신:', logs);
-      const moodData = logs.map((log) => ({ date: log.date, mood: log.mood }));
-      console.log('[Growth Store] 매핑된 moodLogs:', moodData);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 이번 달의 시작과 끝
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      const { data: logs, error } = await supabase
+        .from('daily_logs')
+        .select('date, mood')
+        .eq('user_id', user.id)
+        .gte('date', startOfMonth)
+        .lte('date', endOfMonth)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      const moodData = (logs || []).map((log) => ({
+        date: log.date,
+        mood: log.mood,
+      }));
+
       set({ moodLogs: moodData });
-      console.log('[Growth Store] moodLogs 스토어 업데이트 완료');
     } catch (error) {
       console.error('[Growth Store] 감정 기록 로드 실패:', error);
     }

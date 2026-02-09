@@ -29,7 +29,8 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  // Supabase는 URL fragment에서 자동으로 세션을 복원하므로 토큰 체크 불필요
+  const hasToken = searchParams.has("token") || window.location.hash.includes("access_token");
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -49,19 +50,10 @@ function ResetPasswordPage() {
   });
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    if (!token) {
-      alert("유효하지 않은 링크입니다.");
-      return;
-    }
-
     clearError();
 
     try {
-      await resetPassword({
-        token,
-        password: data.password,
-        passwordConfirm: data.confirmPassword,
-      });
+      await resetPassword(data.password);
       setIsSubmitted(true);
     } catch {
       // 에러는 store에서 처리됨
@@ -69,7 +61,7 @@ function ResetPasswordPage() {
   };
 
   // 토큰이 없는 경우
-  if (!token) {
+  if (!hasToken) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-8">
         <div className="w-full max-w-md flex flex-col items-center">

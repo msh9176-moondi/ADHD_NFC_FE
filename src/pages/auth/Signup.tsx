@@ -86,13 +86,12 @@ function SignupPage() {
       await signup({
         email: data.email,
         password: data.password,
-        passwordConfirm: data.confirmPassword,
         agreeTermsOfService: data.termsOfService,
         agreePrivacyPolicy: data.privacyPolicy,
         agreeMarketing: data.marketing ?? false,
         plannerNumber: data.plannerNumber || undefined,
       });
-      alert("회원가입이 완료되었습니다!");
+      alert("회원가입이 완료되었습니다! 이메일을 확인해주세요.");
       navigate("/auth/splash/login");
     } catch (err: unknown) {
       console.error("회원가입 에러:", err);

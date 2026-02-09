@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 export type TraitKey =
   | 'attention'
@@ -16,10 +16,6 @@ export interface TraitScores {
   emotional: number;
   motivation: number;
   environment: number;
-}
-
-interface TraitScoreResponse {
-  traitScore: TraitScores | null;
 }
 
 interface TraitsState {
@@ -41,14 +37,33 @@ export const useTraitsStore = create<TraitsState>((set, get) => ({
   fetchTraits: async () => {
     set({ isLoading: true });
     try {
-      console.log('[Traits Store] fetchTraits 호출');
-      const response = await api.get<TraitScoreResponse>('/traits');
-      console.log('[Traits Store] API 응답:', response.data);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        set({ hasFetched: true, isLoading: false });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('trait_scores')
+        .select('attention, impulsive, complex, emotional, motivation, environment')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[Traits Store] 성향 점수 로드 실패:', error);
+      }
+
       set({
-        scores: response.data.traitScore,
+        scores: data ? {
+          attention: data.attention,
+          impulsive: data.impulsive,
+          complex: data.complex,
+          emotional: data.emotional,
+          motivation: data.motivation,
+          environment: data.environment,
+        } : null,
         hasFetched: true,
       });
-      console.log('[Traits Store] 스토어 업데이트 완료:', response.data.traitScore);
     } catch (error) {
       console.error('[Traits Store] 성향 점수 로드 실패:', error);
       set({ hasFetched: true });
@@ -60,11 +75,46 @@ export const useTraitsStore = create<TraitsState>((set, get) => ({
   updateTraits: async (scores: Partial<TraitScores>) => {
     set({ isLoading: true });
     try {
-      console.log('[Traits Store] updateTraits 호출:', scores);
-      const response = await api.put<TraitScoreResponse>('/traits', scores);
-      console.log('[Traits Store] 저장 응답:', response.data);
-      set({ scores: response.data.traitScore });
-      console.log('[Traits Store] 스토어 업데이트 완료');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('로그인이 필요합니다.');
+
+      // 기존 데이터 확인
+      const { data: existing } = await supabase
+        .from('trait_scores')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      let result;
+      if (existing) {
+        // 업데이트
+        result = await supabase
+          .from('trait_scores')
+          .update(scores)
+          .eq('user_id', user.id)
+          .select('attention, impulsive, complex, emotional, motivation, environment')
+          .single();
+      } else {
+        // 새로 생성
+        result = await supabase
+          .from('trait_scores')
+          .insert({ user_id: user.id, ...scores })
+          .select('attention, impulsive, complex, emotional, motivation, environment')
+          .single();
+      }
+
+      if (result.error) throw result.error;
+
+      set({
+        scores: result.data ? {
+          attention: result.data.attention,
+          impulsive: result.data.impulsive,
+          complex: result.data.complex,
+          emotional: result.data.emotional,
+          motivation: result.data.motivation,
+          environment: result.data.environment,
+        } : null,
+      });
     } catch (error) {
       console.error('[Traits Store] 성향 점수 저장 실패:', error);
       throw error;

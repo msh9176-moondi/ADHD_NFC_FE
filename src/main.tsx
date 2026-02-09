@@ -1,6 +1,7 @@
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { useAuthStore } from './stores/authStore';
 
 import './index.css';
 import App from './App.tsx';
@@ -9,9 +10,7 @@ import SignupPage from './pages/auth/Signup.tsx';
 import SplashPage from './pages/auth/Splash.tsx';
 import ForgotPasswordPage from './pages/auth/ForgotPassword.tsx';
 import ResetPasswordPage from './pages/auth/ResetPassword.tsx';
-import KakaoCallbackPage from './pages/auth/KakaoCallback.tsx';
-import GoogleCallbackPage from './pages/auth/GoogleCallback.tsx';
-import NaverCallbackPage from './pages/auth/NaverCallback.tsx';
+import { KakaoCallbackPage, GoogleCallbackPage, NaverCallbackPage } from './pages/auth/SocialCallback.tsx';
 import GrowthPage from './pages/growth/Growth.tsx';
 import MarketPage from './pages/market/Market.tsx';
 import CartpagePage from './pages/market/order/Cartpage.tsx';
@@ -40,9 +39,21 @@ import AdminUsersPage from './pages/admin/AdminUsers.tsx';
 import AdminProductsPage from './pages/admin/AdminProducts.tsx';
 import AdminRoutinesPage from './pages/admin/AdminRoutines.tsx';
 
+// 인증 초기화 컴포넌트
+function AuthInitializer({ children }: { children: React.ReactNode }) {
+  const initialize = useAuthStore((state) => state.initialize);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  return <>{children}</>;
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+      <AuthInitializer>
       <Routes>
         {/* ✅ Auth: 헤더/푸터 없이 */}
         <Route element={<AuthLayout />}>
@@ -145,6 +156,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="admin/routines" element={<AdminRoutinesPage />} />
         </Route>
       </Routes>
+      </AuthInitializer>
     </BrowserRouter>
   </StrictMode>,
 );
