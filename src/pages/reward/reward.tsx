@@ -57,18 +57,20 @@ function RewardPage() {
         // 유저 정보 조회
         const { data: userData } = await supabase
           .from('users')
-          .select('total_tag_count, coin_balance')
+          .select('total_tag_count, coin_balance, xp')
           .eq('id', user.id)
           .single();
 
         const currentTagCount = userData?.total_tag_count || 0;
         const currentCoinBalance = userData?.coin_balance || 0;
+        const currentXp = userData?.xp || 0;
 
-        // 조회수 +1 (항상)
+        // 조회수 +1, XP +10 (항상)
         const newTagCount = currentTagCount + 1;
+        const newXp = currentXp + 10;
         await supabase
           .from('users')
-          .update({ total_tag_count: newTagCount })
+          .update({ total_tag_count: newTagCount, xp: newXp })
           .eq('id', user.id);
 
         setTotalTagCount(newTagCount);
