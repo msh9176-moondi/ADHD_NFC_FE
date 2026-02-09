@@ -14,7 +14,7 @@ import { useProgressStore } from "@/store/progress";
 import { useTraitsStore, type TraitKey } from "@/store/traits";
 import { useProductsStore } from "@/store/products";
 import { getTopTrait, TRAIT_DESCRIPTIONS } from "@/utils/traits";
-import { api } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 // 물뿌리개 가격 상수
 const WATERING_CAN_PRICE = 15;
@@ -108,15 +108,56 @@ function MarketPage() {
     setWateringMessage(null);
 
     try {
-      await api.post("/growth/watering-can");
+      // 현재 로그인된 유저 확인
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setWateringMessage({ type: "error", text: "로그인이 필요해요" });
+        return;
+      }
+
+      // 유저 정보 조회
+      const { data: userData } = await supabase
+        .from('users')
+        .select('coin_balance, xp')
+        .eq('id', user.id)
+        .single();
+
+      const currentCoinBalance = userData?.coin_balance || 0;
+      const currentXp = userData?.xp || 0;
+
+      if (currentCoinBalance < WATERING_CAN_PRICE) {
+        setWateringMessage({ type: "error", text: "코인이 부족해요!" });
+        return;
+      }
+
+      // 코인 -15, XP +50
+      const newCoinBalance = currentCoinBalance - WATERING_CAN_PRICE;
+      const newXp = currentXp + 50;
+
+      await supabase
+        .from('users')
+        .update({ coin_balance: newCoinBalance, xp: newXp })
+        .eq('id', user.id);
+
+      // 코인 히스토리 기록
+      await supabase
+        .from('coin_history')
+        .insert({
+          user_id: user.id,
+          type: 'use',
+          amount: -WATERING_CAN_PRICE,
+          balance_after: newCoinBalance,
+          description: '물뿌리개 구매',
+        });
+
       await syncFromBackend(); // 코인 & XP 갱신
       setWateringMessage({
         type: "success",
         text: "🌱 물뿌리개로 나무에 물을 줬어요! XP +50",
       });
     } catch (error: any) {
-      const msg = error?.response?.data?.message || "구매에 실패했어요";
-      setWateringMessage({ type: "error", text: msg });
+      console.error("물뿌리개 구매 실패:", error);
+      setWateringMessage({ type: "error", text: "구매에 실패했어요" });
     } finally {
       setIsWateringLoading(false);
       setTimeout(() => setWateringMessage(null), 3000);
@@ -181,7 +222,7 @@ function MarketPage() {
   }, [recommendations, topTrait]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full mt-14">
+    <div className="flex flex-col items-center justify-center w-full mt-6">
       {/* 메인 타이틀 */}
       <PageHeader
         title="Dopa Market"
