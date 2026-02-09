@@ -297,134 +297,134 @@ function MarketPage() {
       </section>
 
       {/* 성향 테스트 */}
-      <section className="flex flex-col md:flex-row items-center justify-center w-full gap-4 mt-4">
-        <div className="w-full md:flex-1 flex flex-col">
-          <h3 className="text-[14px] font-semibold text-[#795549] pb-1">
+      <section className="flex flex-col md:flex-row items-stretch w-full gap-4 mt-6">
+        {/* ADHD 성향 카드 */}
+        <div className="w-full md:flex-1">
+          <h3 className="text-[14px] font-semibold text-[#795549] pb-2">
             당신의 ADHD성향
           </h3>
-          <Card className="w-full h-60 p-3 md:p-4">
-            <div className="flex items-center justify-center gap-2 md:gap-6">
-              {/* 왼쪽: 육각형 + 버튼을 세로로 묶은 영역 */}
-              <div className="flex flex-col items-center gap-2 md:gap-3">
-                {/* 육각형 영역 */}
-                <div className="w-28 md:w-40 flex items-center justify-center">
-                  {!taken ? (
+          <Card className="w-full p-4">
+            <div className="flex items-center gap-4">
+              {/* 차트 영역 */}
+              <div className="shrink-0">
+                {!taken ? (
+                  <div className="w-24 h-24 md:w-32 md:h-32">
                     <QuestionHexagon />
-                  ) : (
-                    <ChartContainer
-                      config={chartConfig}
-                      className="mx-auto aspect-square max-h-28 w-28 md:max-h-40 md:w-40"
+                  </div>
+                ) : (
+                  <ChartContainer
+                    config={chartConfig}
+                    className="w-24 h-24 md:w-32 md:h-32"
+                  >
+                    <RadarChart
+                      data={chartData}
+                      margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
                     >
-                      <RadarChart
-                        data={chartData}
-                        margin={{ top: 16, right: 16, bottom: 16, left: 16 }}
-                      >
-                        <ChartTooltip
-                          cursor={false}
-                          content={<ChartTooltipContent />}
-                        />
-                        <PolarAngleAxis
-                          dataKey="axis"
-                          tick={(props) => {
-                            const { x, y, payload, textAnchor } = props as any;
-                            return (
-                              <text
-                                x={x}
-                                y={y}
-                                textAnchor={textAnchor}
-                                fill="#795549"
-                                fontSize={10}
-                                fontWeight={600}
-                                dy={3}
-                              >
-                                {payload.value}
-                              </text>
-                            );
-                          }}
-                        />
-                        <PolarGrid />
-                        <Radar
-                          dataKey="score"
-                          fill="#DBA67A"
-                          stroke="#DBA67A"
-                          fillOpacity={0.6}
-                        />
-                      </RadarChart>
-                    </ChartContainer>
-                  )}
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent />}
+                      />
+                      <PolarAngleAxis
+                        dataKey="axis"
+                        tick={(props) => {
+                          const { x, y, payload, textAnchor } = props as any;
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              textAnchor={textAnchor}
+                              fill="#795549"
+                              fontSize={8}
+                              fontWeight={600}
+                              dy={2}
+                            >
+                              {payload.value}
+                            </text>
+                          );
+                        }}
+                      />
+                      <PolarGrid />
+                      <Radar
+                        dataKey="score"
+                        fill="#DBA67A"
+                        stroke="#DBA67A"
+                        fillOpacity={0.6}
+                      />
+                    </RadarChart>
+                  </ChartContainer>
+                )}
+              </div>
+
+              {/* 설명 + 버튼 영역 */}
+              <div className="flex-1 flex flex-col justify-between min-h-[96px]">
+                <div
+                  className={[
+                    "text-[11px] md:text-[12px] leading-relaxed text-[#795549]/80",
+                    !taken ? "blur-[4px] select-none" : "",
+                  ].join(" ")}
+                >
+                  {topTraitLines.map((line, i) => (
+                    <p key={i} className="break-keep mb-1">
+                      {line}
+                    </p>
+                  ))}
                 </div>
 
-                {/* 버튼 영역: 육각형 바로 아래 배치 */}
                 <button
                   onClick={() => navigate("/market/test/branchingtest")}
-                  className="w-full text-center"
+                  className="self-start mt-2"
                   type="button"
                 >
                   <div className="inline-block">
-                    <div className="text-[12px] font-semibold text-[#795549]">
-                      나의 ADHD 성향 테스트 →
+                    <div className="text-[11px] md:text-[12px] font-semibold text-[#795549]">
+                      성향 테스트 하기 →
                     </div>
-                    <div className="mt-0.5 h-0.5 w-full bg-[#795549]" />
+                    <div className="mt-0.5 h-0.5 w-full bg-[#795549]/60" />
                   </div>
                 </button>
-              </div>
-
-              {/* 오른쪽: 설명 영역 */}
-              <div className="flex-1">
-                <div
-                  className={[
-                    "text-[12px] leading-relaxed text-[#795549]/70 space-y-2",
-                    !taken ? "blur-[6px] select-none" : "",
-                  ].join(" ")}
-                >
-                  <div className="space-y-1">
-                    {topTraitLines.map((line, i) => (
-                      <p key={i} className="break-keep">
-                        {line}
-                      </p>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </Card>
         </div>
 
-        <div className="w-full md:w-auto flex flex-col">
-          <h3 className="text-[14px] font-semibold text-[#795549] pb-1">
+        {/* 추천 아이템 카드 */}
+        <div className="w-full md:w-36">
+          <h3 className="text-[14px] font-semibold text-[#795549] pb-2">
             추천 아이템
           </h3>
 
-          <Card className="relative w-full md:w-32 h-40 md:h-60 p-3">
+          <Card className="w-full p-4 md:h-full">
             {!taken || !recommendedItem ? (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-4xl">🤔</div>
+              <div className="flex items-center justify-center py-4 md:h-full">
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🤔</div>
+                  <p className="text-[10px] text-[#795549]/60">테스트 후 추천</p>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-row md:flex-col items-center md:items-center gap-4 h-full">
-                <img
-                  src={recommendedItem.imageUrl}
-                  alt={recommendedItem.name}
-                  className="w-14 h-14 object-contain shrink-0"
-                />
-                <div className="flex-1 flex flex-col gap-1">
-                  <div className="text-[12px] font-semibold text-[#795549]">
+              <div className="flex flex-row md:flex-col items-center gap-4">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#F5F0E5] rounded-xl flex items-center justify-center shrink-0">
+                  <img
+                    src={recommendedItem.imageUrl}
+                    alt={recommendedItem.name}
+                    className="w-12 h-12 md:w-16 md:h-16 object-contain"
+                  />
+                </div>
+                <div className="flex-1 md:text-center">
+                  <div className="text-[13px] font-semibold text-[#795549] mb-1">
                     {recommendedItem.name}
                   </div>
-                  <div className="text-[10px] text-[#795549]/70 leading-snug">
+                  <div className="text-[10px] text-[#795549]/70 leading-snug mb-2">
                     {recommendedItem.description}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/market/order/cartpage")}
+                    className="text-[11px] font-medium text-white bg-[#DBA67A] px-3 py-1.5 rounded-full hover:bg-[#c99568] transition-colors"
+                  >
+                    보러가기
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate("/market/order/cartpage")}
-                  className="text-[12px] font-semibold text-[#795549] shrink-0"
-                >
-                  <div className="inline-block">
-                    <div>보러가기 →</div>
-                    <div className="mt-0.5 h-0.5 w-full bg-[#795549]" />
-                  </div>
-                </button>
               </div>
             )}
           </Card>
