@@ -244,8 +244,8 @@ function MarketPage() {
         </div>
       )}
 
-      {/* 카드 박스 - 모바일에서 고정 높이로 독립 스크롤 */}
-      <section className="w-full mt-2 h-[280px] md:h-auto md:max-h-160 overflow-y-auto overscroll-contain pr-1 no-scrollbar">
+      {/* 카드 박스 */}
+      <section className="w-full mt-2">
         <div className="grid grid-cols-2 gap-x-4 gap-y-4">
           <ProductCard
             title="체험단 전용 특전"
@@ -297,8 +297,8 @@ function MarketPage() {
       </section>
 
       {/* 성향 테스트 */}
-      <section className="flex items-center justify-center w-full gap-3 mt-4 px-1">
-        <div className="flex-1 flex flex-col">
+      <section className="flex flex-col md:flex-row items-center justify-center w-full gap-4 mt-4">
+        <div className="w-full md:flex-1 flex flex-col">
           <h3 className="text-[14px] font-semibold text-[#795549] pb-1">
             당신의 ADHD성향
           </h3>
@@ -390,49 +390,42 @@ function MarketPage() {
           </Card>
         </div>
 
-        <div className="flex flex-col">
+        <div className="w-full md:w-auto flex flex-col">
           <h3 className="text-[14px] font-semibold text-[#795549] pb-1">
             추천 아이템
           </h3>
 
-          <Card className="relative w-24 md:w-32 h-60 p-2 md:p-3">
+          <Card className="relative w-full md:w-32 h-40 md:h-60 p-3">
             {!taken || !recommendedItem ? (
               <div className="h-full flex items-center justify-center">
                 <div className="text-4xl">🤔</div>
               </div>
             ) : (
-              <>
-                {/* 콘텐츠: 위쪽 정렬 + 버튼 자리 확보 */}
-                <div className="flex flex-col items-center text-center gap-2 pt-1">
+              <div className="flex flex-row md:flex-col items-center md:items-center gap-4 h-full">
+                <img
+                  src={recommendedItem.imageUrl}
+                  alt={recommendedItem.name}
+                  className="w-14 h-14 object-contain shrink-0"
+                />
+                <div className="flex-1 flex flex-col gap-1">
                   <div className="text-[12px] font-semibold text-[#795549]">
                     {recommendedItem.name}
                   </div>
-
-                  <div className="flex flex-col items-center justify-center gap-4 mt-4">
-                    <img
-                      src={recommendedItem.imageUrl}
-                      alt={recommendedItem.name}
-                      className="w-14 h-14 object-contain"
-                    />
-
-                    <div className="text-[10px] text-[#795549]/70 leading-snug whitespace-pre-line">
-                      {recommendedItem.description}
-                    </div>
+                  <div className="text-[10px] text-[#795549]/70 leading-snug">
+                    {recommendedItem.description}
                   </div>
                 </div>
-
-                {/* 버튼: 카드 하단 고정 (여백 깔끔) */}
                 <button
                   type="button"
                   onClick={() => navigate("/market/order/cartpage")}
-                  className="absolute left-3 right-3 bottom-6 text-[12px] font-semibold text-[#795549]"
+                  className="text-[12px] font-semibold text-[#795549] shrink-0"
                 >
                   <div className="inline-block">
                     <div>보러가기 →</div>
                     <div className="mt-0.5 h-0.5 w-full bg-[#795549]" />
                   </div>
                 </button>
-              </>
+              </div>
             )}
           </Card>
         </div>
