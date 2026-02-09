@@ -296,29 +296,29 @@ function MarketPage() {
         </div>
       </section>
 
-      {/* 성향 테스트 */}
-      <section className="flex flex-col md:flex-row items-stretch w-full gap-4 mt-6">
+      {/* 성향 테스트 & 추천 아이템 */}
+      <section className="w-full mt-6 space-y-4">
         {/* ADHD 성향 카드 */}
-        <div className="w-full md:flex-1">
+        <div className="w-full">
           <h3 className="text-[14px] font-semibold text-[#795549] pb-2">
             당신의 ADHD성향
           </h3>
           <Card className="w-full p-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center gap-3">
               {/* 차트 영역 */}
               <div className="shrink-0">
                 {!taken ? (
-                  <div className="w-24 h-24 md:w-32 md:h-32">
+                  <div className="w-28 h-28">
                     <QuestionHexagon />
                   </div>
                 ) : (
                   <ChartContainer
                     config={chartConfig}
-                    className="w-24 h-24 md:w-32 md:h-32"
+                    className="w-32 h-32"
                   >
                     <RadarChart
                       data={chartData}
-                      margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                      margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
                     >
                       <ChartTooltip
                         cursor={false}
@@ -334,7 +334,7 @@ function MarketPage() {
                               y={y}
                               textAnchor={textAnchor}
                               fill="#795549"
-                              fontSize={8}
+                              fontSize={10}
                               fontWeight={600}
                               dy={2}
                             >
@@ -356,15 +356,15 @@ function MarketPage() {
               </div>
 
               {/* 설명 + 버튼 영역 */}
-              <div className="flex-1 flex flex-col justify-between min-h-[96px]">
+              <div className="w-full text-center">
                 <div
                   className={[
-                    "text-[11px] md:text-[12px] leading-relaxed text-[#795549]/80",
+                    "text-[12px] leading-relaxed text-[#795549]/80 mb-3",
                     !taken ? "blur-[4px] select-none" : "",
                   ].join(" ")}
                 >
                   {topTraitLines.map((line, i) => (
-                    <p key={i} className="break-keep mb-1">
+                    <p key={i} className="break-keep">
                       {line}
                     </p>
                   ))}
@@ -372,15 +372,13 @@ function MarketPage() {
 
                 <button
                   onClick={() => navigate("/market/test/branchingtest")}
-                  className="self-start mt-2"
+                  className="inline-block"
                   type="button"
                 >
-                  <div className="inline-block">
-                    <div className="text-[11px] md:text-[12px] font-semibold text-[#795549]">
-                      성향 테스트 하기 →
-                    </div>
-                    <div className="mt-0.5 h-0.5 w-full bg-[#795549]/60" />
+                  <div className="text-[12px] font-semibold text-[#795549]">
+                    성향 테스트 하기 →
                   </div>
+                  <div className="mt-0.5 h-0.5 w-full bg-[#795549]/60" />
                 </button>
               </div>
             </div>
@@ -388,39 +386,41 @@ function MarketPage() {
         </div>
 
         {/* 추천 아이템 카드 */}
-        <div className="w-full md:w-36">
+        <div className="w-full">
           <h3 className="text-[14px] font-semibold text-[#795549] pb-2">
             추천 아이템
           </h3>
 
-          <Card className="w-full p-4 md:h-full">
+          <Card className="w-full p-4">
             {!taken || !recommendedItem ? (
-              <div className="flex items-center justify-center py-4 md:h-full">
+              <div className="flex items-center justify-center py-6">
                 <div className="text-center">
-                  <div className="text-3xl mb-2">🤔</div>
-                  <p className="text-[10px] text-[#795549]/60">테스트 후 추천</p>
+                  <div className="text-4xl mb-2">🤔</div>
+                  <p className="text-[12px] text-[#795549]/60">
+                    성향 테스트 후 맞춤 아이템을 추천해드려요
+                  </p>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-row md:flex-col items-center gap-4">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#F5F0E5] rounded-xl flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 bg-[#F5F0E5] rounded-xl flex items-center justify-center shrink-0">
                   <img
                     src={recommendedItem.imageUrl}
                     alt={recommendedItem.name}
-                    className="w-12 h-12 md:w-16 md:h-16 object-contain"
+                    className="w-14 h-14 object-contain"
                   />
                 </div>
-                <div className="flex-1 md:text-center">
-                  <div className="text-[13px] font-semibold text-[#795549] mb-1">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[14px] font-semibold text-[#795549] mb-1">
                     {recommendedItem.name}
                   </div>
-                  <div className="text-[10px] text-[#795549]/70 leading-snug mb-2">
+                  <div className="text-[11px] text-[#795549]/70 leading-snug mb-2">
                     {recommendedItem.description}
                   </div>
                   <button
                     type="button"
                     onClick={() => navigate("/market/order/cartpage")}
-                    className="text-[11px] font-medium text-white bg-[#DBA67A] px-3 py-1.5 rounded-full hover:bg-[#c99568] transition-colors"
+                    className="text-[11px] font-medium text-white bg-[#DBA67A] px-4 py-1.5 rounded-full hover:bg-[#c99568] transition-colors"
                   >
                     보러가기
                   </button>
