@@ -214,9 +214,56 @@ function AiAnalysisPage() {
     }
   };
 
-  // 리포트 재생성 (현재 비활성화 - AI 서버 연동 필요)
+  // 리포트 생성/재생성
   const handleRegenerate = async () => {
-    alert("AI 리포트 생성 기능은 준비 중입니다.");
+    if (isRegenerating) return;
+
+    setIsRegenerating(true);
+    setError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError("로그인이 필요합니다.");
+        return;
+      }
+
+      const yearMonth = getCurrentYearMonth();
+
+      const response = await fetch('/api/generate-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ yearMonth }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '리포트 생성에 실패했습니다.');
+      }
+
+      // 성공 시 리포트 갱신
+      if (data.report) {
+        setReport((prev) => ({
+          ...prev!,
+          id: data.report.id,
+          summary: data.report.summary,
+          detail: data.report.detail,
+          model: data.report.model,
+          regenerateRemaining: data.report.regenerateRemaining,
+          createdAt: data.report.createdAt,
+          updatedAt: data.report.updatedAt,
+        }));
+      }
+    } catch (err: any) {
+      console.error("리포트 생성 실패:", err);
+      setError(err.message || "리포트 생성에 실패했습니다.");
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   useEffect(() => {
@@ -321,33 +368,62 @@ function AiAnalysisPage() {
           </Card>
         </div>
 
-        {/* 탭 */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setActiveTab("summary")}
-            className={cn(
-              "flex-1 py-2 rounded-full text-sm font-medium transition-all cursor-pointer",
-              activeTab === "summary"
-                ? "bg-[#795549] text-white"
-                : "bg-[#EFDDC3] text-[#795549]",
+        {/* AI 분석 없을 때 */}
+        {!summary && !detail && (
+          <Card className="p-6 bg-white rounded-xl shadow-sm mb-6 text-center">
+            <div className="text-4xl mb-3">🤖</div>
+            <h3 className="font-semibold text-[#795549] mb-2">
+              AI 패턴 분석을 시작해보세요
+            </h3>
+            <p className="text-sm text-[#795549]/70 mb-4">
+              {stats.recordDays}일간의 기록을 바탕으로<br />
+              당신만의 ADHD 패턴을 분석해드릴게요.
+            </p>
+            {stats.recordDays < 3 ? (
+              <p className="text-xs text-[#DBA67A]">
+                * 최소 3일 이상의 기록이 필요해요 (현재 {stats.recordDays}일)
+              </p>
+            ) : (
+              <PrimaryPillButton
+                onClick={handleRegenerate}
+                disabled={isRegenerating}
+                className="w-full"
+              >
+                {isRegenerating ? "AI가 분석 중..." : "AI 분석 시작하기 ✨"}
+              </PrimaryPillButton>
             )}
-          >
-            요약
-          </button>
-          <button
-            onClick={() => setActiveTab("detail")}
-            className={cn(
-              "flex-1 py-2 rounded-full text-sm font-medium transition-all cursor-pointer",
-              activeTab === "detail"
-                ? "bg-[#795549] text-white"
-                : "bg-[#EFDDC3] text-[#795549]",
-            )}
-          >
-            상세
-          </button>
-        </div>
+          </Card>
+        )}
 
-        {/* 섹션들 */}
+        {/* 탭 - 리포트가 있을 때만 표시 */}
+        {(summary || detail) && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setActiveTab("summary")}
+              className={cn(
+                "flex-1 py-2 rounded-full text-sm font-medium transition-all cursor-pointer",
+                activeTab === "summary"
+                  ? "bg-[#795549] text-white"
+                  : "bg-[#EFDDC3] text-[#795549]",
+              )}
+            >
+              요약
+            </button>
+            <button
+              onClick={() => setActiveTab("detail")}
+              className={cn(
+                "flex-1 py-2 rounded-full text-sm font-medium transition-all cursor-pointer",
+                activeTab === "detail"
+                  ? "bg-[#795549] text-white"
+                  : "bg-[#EFDDC3] text-[#795549]",
+              )}
+            >
+              상세
+            </button>
+          </div>
+        )}
+
+        {/* 섹션들 - 리포트가 있을 때만 표시 */}
         <div className="space-y-4">
           {Object.entries(SECTION_TITLES).map(([key, { title, emoji }]) => {
             const sectionKey = key as keyof ReportSummary;
@@ -412,22 +488,25 @@ function AiAnalysisPage() {
             완료 →
           </PrimaryPillButton>
 
-          <button
-            onClick={handleRegenerate}
-            disabled={isRegenerating || report.regenerateRemaining <= 0}
-            className={cn(
-              "w-full py-3 rounded-full text-sm font-medium transition-all cursor-pointer",
-              "bg-white border border-[#DBA67A]/30 text-[#795549]",
-              "hover:bg-[#F5F0E5]",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-            )}
-          >
-            {isRegenerating ? (
-              "재생성 중..."
-            ) : (
-              <>재생성 (남은 횟수: {report.regenerateRemaining}회)</>
-            )}
-          </button>
+          {/* 리포트가 있을 때만 재생성 버튼 표시 */}
+          {(summary || detail) && (
+            <button
+              onClick={handleRegenerate}
+              disabled={isRegenerating || report.regenerateRemaining <= 0}
+              className={cn(
+                "w-full py-3 rounded-full text-sm font-medium transition-all cursor-pointer",
+                "bg-white border border-[#DBA67A]/30 text-[#795549]",
+                "hover:bg-[#F5F0E5]",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+              )}
+            >
+              {isRegenerating ? (
+                "AI가 재분석 중..."
+              ) : (
+                <>재생성 (남은 횟수: {report.regenerateRemaining}회)</>
+              )}
+            </button>
+          )}
         </div>
 
         {/* 생성 정보 */}
