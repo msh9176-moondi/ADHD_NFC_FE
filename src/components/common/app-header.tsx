@@ -9,8 +9,8 @@ function AppHeader() {
     <header className="flex items-center justify-center pt-20">
       <div className="flex items-center justify-center">
         <img
-          src="public\assets\logo_text.svg"
-          alt="Sunglasses"
+          src="/assets/logo_text.svg"
+          alt="FLOCA Logo"
           className="h-32 w-auto cursor-pointer"
           onClick={handleLogoClick}
         />
