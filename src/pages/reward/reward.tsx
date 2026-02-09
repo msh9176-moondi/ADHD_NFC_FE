@@ -65,23 +65,23 @@ function RewardPage() {
         const currentCoinBalance = userData?.coin_balance || 0;
         const currentXp = userData?.xp || 0;
 
-        // 조회수 +1, XP +10 (항상)
+        // 조회수 +1 (항상)
         const newTagCount = currentTagCount + 1;
-        const newXp = currentXp + 10;
         await supabase
           .from('users')
-          .update({ total_tag_count: newTagCount, xp: newXp })
+          .update({ total_tag_count: newTagCount })
           .eq('id', user.id);
 
         setTotalTagCount(newTagCount);
 
         if (!alreadyCheckedIn) {
-          // 코인 +15 지급
+          // 코인 +15, XP +10 지급 (하루 1회만)
           const newCoinBalance = currentCoinBalance + 15;
+          const newXp = currentXp + 10;
 
           await supabase
             .from('users')
-            .update({ coin_balance: newCoinBalance })
+            .update({ coin_balance: newCoinBalance, xp: newXp })
             .eq('id', user.id);
 
           // 코인 히스토리 기록
