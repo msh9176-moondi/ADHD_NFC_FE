@@ -11,11 +11,11 @@ const items = [
 function AppFooter() {
   return (
     <footer
-      className="w-full self-stretch"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#F5F0E5]"
       style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
     >
-      <nav className="w-full">
-        <ul className="w-full flex items-center justify-around mt-0 py-8">
+      <nav className="w-full max-w-[412px] mx-auto">
+        <ul className="w-full flex items-center justify-around mt-0 py-4">
           {items.map((item) => (
             <li key={item.to} className="flex-1 flex justify-center">
               <NavLink
