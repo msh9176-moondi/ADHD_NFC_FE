@@ -58,6 +58,8 @@ function ProfilePage() {
 
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === "admin";
 
   const handleLogout = async () => {
     await logout();
@@ -478,6 +480,31 @@ function ProfilePage() {
             </PrimaryPillButton>
           </div>
         </section>
+
+        {/* 관리자 페이지 (관리자만 표시) */}
+        {isAdmin && (
+          <section className="mt-10">
+            <button
+              type="button"
+              onClick={() => navigate("/admin")}
+              className="w-full text-left bg-[#795549] rounded-2xl p-4 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg">
+                  ⚙️
+                </div>
+                <div>
+                  <div className="text-[13px] font-semibold text-white">
+                    관리자 페이지
+                  </div>
+                  <div className="text-[12px] text-white/80">
+                    사용자, 상품, 루틴 관리
+                  </div>
+                </div>
+              </div>
+            </button>
+          </section>
+        )}
 
         {/* 로그아웃 */}
         <section className="mt-10 mb-10">
