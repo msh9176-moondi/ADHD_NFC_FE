@@ -66,11 +66,11 @@ const chartConfig = {
 function QuestionHexagon() {
   // 테스트 전 "물음표 육각형"
   return (
-    <div className="relative w-35 h-35">
+    <div className="relative w-full h-full">
       <svg viewBox="0 0 100 100" className="w-full h-full">
         <polygon points="50,6 90,28 90,72 50,94 10,72 10,28" fill="#D9A77F" />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-[#795549] text-5xl font-extrabold">
+      <div className="absolute inset-0 flex items-center justify-center text-[#795549] text-3xl font-extrabold">
         ?
       </div>
     </div>
@@ -303,22 +303,22 @@ function MarketPage() {
           <h3 className="text-[14px] font-semibold text-[#795549] pb-2">
             당신의 ADHD성향
           </h3>
-          <Card className="w-full p-4">
-            <div className="flex flex-row items-center gap-5">
+          <Card className="w-full p-4 overflow-hidden">
+            <div className="flex flex-row items-center gap-4">
               {/* 차트 영역 (왼쪽) */}
-              <div className="w-[110px] h-[110px] shrink-0 flex items-center justify-center">
+              <div className="w-[90px] h-[90px] shrink-0 flex items-center justify-center overflow-hidden">
                 {!taken ? (
-                  <div className="w-[90px] h-[90px]">
+                  <div className="w-[80px] h-[80px]">
                     <QuestionHexagon />
                   </div>
                 ) : (
                   <ChartContainer
                     config={chartConfig}
-                    className="!w-[110px] !h-[110px] !min-h-0"
+                    className="!w-[90px] !h-[90px] !min-h-0"
                   >
                     <RadarChart
                       data={chartData}
-                      margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                      margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
                     >
                       <ChartTooltip
                         cursor={false}
