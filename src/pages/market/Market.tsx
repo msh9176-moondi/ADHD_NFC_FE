@@ -70,7 +70,7 @@ function QuestionHexagon() {
       <svg viewBox="0 0 100 100" className="w-full h-full">
         <polygon points="50,6 90,28 90,72 50,94 10,72 10,28" fill="#D9A77F" />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-[#795549] text-4xl font-extrabold">
+      <div className="absolute inset-0 flex items-center justify-center text-[#795549] text-5xl font-extrabold">
         ?
       </div>
     </div>
@@ -303,22 +303,22 @@ function MarketPage() {
           <h3 className="text-[14px] font-semibold text-[#795549] pb-2">
             당신의 ADHD성향
           </h3>
-          <Card className="w-full py-5 px-4 overflow-hidden">
+          <Card className="w-full py-5 px-4">
             <div className="flex flex-row items-center gap-4">
               {/* 차트 영역 (왼쪽) */}
-              <div className="w-[105px] h-[105px] shrink-0 flex items-center justify-center">
+              <div className="w-[120px] h-[120px] shrink-0 flex items-center justify-center">
                 {!taken ? (
-                  <div className="w-[100px] h-[100px]">
+                  <div className="w-[115px] h-[115px]">
                     <QuestionHexagon />
                   </div>
                 ) : (
                   <ChartContainer
                     config={chartConfig}
-                    className="!w-[105px] !h-[105px] !min-h-0"
+                    className="!w-[120px] !h-[120px] !min-h-0"
                   >
                     <RadarChart
                       data={chartData}
-                      margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                      margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
                     >
                       <ChartTooltip
                         cursor={false}
@@ -334,7 +334,7 @@ function MarketPage() {
                               y={y}
                               textAnchor={textAnchor}
                               fill="#795549"
-                              fontSize={9}
+                              fontSize={10}
                               fontWeight={600}
                               dy={2}
                             >
@@ -356,10 +356,10 @@ function MarketPage() {
               </div>
 
               {/* 설명 + 버튼 영역 (오른쪽) */}
-              <div className="flex-1 min-w-0 text-right">
+              <div className="flex-1 min-w-0 flex flex-col items-end">
                 <div
                   className={[
-                    "text-[12px] leading-relaxed text-[#795549]/80 mb-3",
+                    "text-[12px] leading-relaxed text-[#795549]/80 mb-3 text-right",
                     !taken ? "blur-[4px] select-none" : "",
                   ].join(" ")}
                 >
@@ -370,16 +370,12 @@ function MarketPage() {
                   ))}
                 </div>
 
-                <button
+                <PrimaryPillButton
                   onClick={() => navigate("/market/test/branchingtest")}
-                  className="inline-block"
-                  type="button"
+                  className="h-9 px-4 text-[12px]"
                 >
-                  <div className="text-[12px] font-semibold text-[#795549]">
-                    성향 테스트 하기 →
-                  </div>
-                  <div className="mt-0.5 h-0.5 w-full bg-[#795549]/60" />
-                </button>
+                  성향 테스트 하기 →
+                </PrimaryPillButton>
               </div>
             </div>
           </Card>
