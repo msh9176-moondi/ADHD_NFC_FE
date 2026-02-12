@@ -34,7 +34,7 @@ function RootLayout() {
           <div className="w-103 max-w-full flex flex-col flex-1 px-6 md:px-0">
             <AppHeader />
 
-            <main className="flex-1 w-full flex flex-col pb-24">
+            <main className="flex-1 w-full flex flex-col">
               <Outlet />
             </main>
 

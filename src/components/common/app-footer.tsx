@@ -11,10 +11,10 @@ const items = [
 function AppFooter() {
   return (
     <footer
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
+      className="sticky bottom-0 z-50 w-full"
       style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
     >
-      <nav className="w-103 max-w-full px-6 md:px-0">
+      <nav className="w-full">
         <ul className="w-full flex items-center justify-around mt-0 py-4">
           {items.map((item) => (
             <li key={item.to} className="flex-1 flex justify-center">
