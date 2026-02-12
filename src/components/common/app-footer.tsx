@@ -11,7 +11,7 @@ const items = [
 function AppFooter() {
   return (
     <footer
-      className="sticky bottom-0 z-50 w-full"
+      className="sticky bottom-0 z-50 w-full bg-[#F5F0E5]"
       style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
     >
       <nav className="w-full">
