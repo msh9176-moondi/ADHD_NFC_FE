@@ -303,22 +303,22 @@ function MarketPage() {
           <h3 className="text-[14px] font-semibold text-[#795549] pb-2">
             당신의 ADHD성향
           </h3>
-          <Card className="w-full p-4 overflow-hidden">
-            <div className="flex flex-row items-center gap-4">
+          <Card className="w-full p-4">
+            <div className="flex flex-row items-center gap-5">
               {/* 차트 영역 (왼쪽) */}
-              <div className="w-[100px] h-[100px] shrink-0 flex items-center justify-center">
+              <div className="w-[110px] h-[110px] shrink-0 flex items-center justify-center">
                 {!taken ? (
-                  <div className="w-20 h-20">
+                  <div className="w-[90px] h-[90px]">
                     <QuestionHexagon />
                   </div>
                 ) : (
                   <ChartContainer
                     config={chartConfig}
-                    className="!w-[100px] !h-[100px] !min-h-0 !aspect-square"
+                    className="!w-[110px] !h-[110px] !min-h-0"
                   >
                     <RadarChart
                       data={chartData}
-                      margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                      margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
                     >
                       <ChartTooltip
                         cursor={false}
@@ -334,7 +334,7 @@ function MarketPage() {
                               y={y}
                               textAnchor={textAnchor}
                               fill="#795549"
-                              fontSize={8}
+                              fontSize={9}
                               fontWeight={600}
                               dy={2}
                             >
@@ -356,7 +356,7 @@ function MarketPage() {
               </div>
 
               {/* 설명 + 버튼 영역 (오른쪽) */}
-              <div className="flex-1 min-w-0 relative z-10">
+              <div className="flex-1 min-w-0 text-right">
                 <div
                   className={[
                     "text-[12px] leading-relaxed text-[#795549]/80 mb-3",
