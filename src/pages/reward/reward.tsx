@@ -2,7 +2,7 @@ import { PrimaryPillButton } from "@/components/common/PillButton";
 import XpBar from "@/components/common/XpBar";
 import { supabase } from "@/lib/supabase";
 import { useProgressStore } from "@/store/progress";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getGrowthStage } from "@/utils/traits";
 
@@ -16,33 +16,34 @@ function RewardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [totalTagCount, setTotalTagCount] = useState(0);
   const [coinAwarded, setCoinAwarded] = useState(false);
+
+  // StrictMode 중복 실행 및 비동기 경쟁 상태를 방지하기 위한 Ref
   const isProcessingRef = useRef(false);
 
-  // URL에서 cardUid 파라미터 확인 (NFC 태그에서 전달)
-  const cardUid = searchParams.get("cardUid");
-
-  useEffect(() => {
-    // StrictMode에서 중복 실행 방지
+  // 로직을 useCallback으로 감싸서 종속성 관리
+  const processNfcReward = useCallback(async () => {
+    // 이미 처리 중이라면 중복 실행 방지
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
-    const processNfcReward = async () => {
-      // 먼저 백엔드에서 현재 데이터 동기화
+    try {
+      setIsLoading(true);
+
+      // 1. 세션 확인 및 초기 동기화
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       await syncFromBackend();
 
-      try {
-        // 현재 로그인된 유저 확인
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
+      // 2. 오늘 날짜 및 데이터 조회
+      const today = new Date().toISOString().split('T')[0];
 
-        // 오늘 날짜 (한국 시간 기준)
-        const today = new Date().toISOString().split('T')[0];
-
-        // 오늘 이미 코인을 받았는지 확인 (coin_history에서 확인)
-        const { data: todayCheckin } = await supabase
+      // 병렬 조회를 통해 속도 최적화 및 에러 방지 (maybeSingle 사용)
+      const [historyRes, userRes] = await Promise.all([
+        supabase
           .from('coin_history')
           .select('id')
           .eq('user_id', user.id)
@@ -50,66 +51,68 @@ function RewardPage() {
           .eq('description', 'NFC 체크인 보상')
           .gte('created_at', today + 'T00:00:00')
           .lt('created_at', today + 'T23:59:59')
-          .single();
-
-        const alreadyCheckedIn = !!todayCheckin;
-
-        // 유저 정보 조회
-        const { data: userData } = await supabase
+          .maybeSingle(), // 데이터가 없어도 에러를 던지지 않음
+        supabase
           .from('users')
           .select('total_tag_count, coin_balance, xp')
           .eq('id', user.id)
-          .single();
+          .single()
+      ]);
 
-        const currentTagCount = userData?.total_tag_count || 0;
-        const currentCoinBalance = userData?.coin_balance || 0;
-        const currentXp = userData?.xp || 0;
+      const alreadyCheckedIn = !!historyRes.data;
+      const userData = userRes.data;
+      const currentTagCount = userData?.total_tag_count || 0;
+      const currentCoinBalance = userData?.coin_balance || 0;
+      const currentXp = userData?.xp || 0;
 
-        // 조회수 +1 (항상)
-        const newTagCount = currentTagCount + 1;
+      // 3. 조회수 증가 (항상 실행)
+      const newTagCount = currentTagCount + 1;
+      setTotalTagCount(newTagCount);
+      await supabase
+        .from('users')
+        .update({ total_tag_count: newTagCount })
+        .eq('id', user.id);
+
+      // 4. 보상 지급 판단 (하루 1회)
+      if (!alreadyCheckedIn) {
+        const newCoinBalance = currentCoinBalance + 15;
+        const newXp = currentXp + 10;
+
         await supabase
           .from('users')
-          .update({ total_tag_count: newTagCount })
+          .update({ coin_balance: newCoinBalance, xp: newXp })
           .eq('id', user.id);
 
-        setTotalTagCount(newTagCount);
+        await supabase
+          .from('coin_history')
+          .insert({
+            user_id: user.id,
+            type: 'earn',
+            amount: 15,
+            balance_after: newCoinBalance,
+            description: 'NFC 체크인 보상',
+          });
 
-        if (!alreadyCheckedIn) {
-          // 코인 +15, XP +10 지급 (하루 1회만)
-          const newCoinBalance = currentCoinBalance + 15;
-          const newXp = currentXp + 10;
-
-          await supabase
-            .from('users')
-            .update({ coin_balance: newCoinBalance, xp: newXp })
-            .eq('id', user.id);
-
-          // 코인 히스토리 기록
-          await supabase
-            .from('coin_history')
-            .insert({
-              user_id: user.id,
-              type: 'earn',
-              amount: 15,
-              balance_after: newCoinBalance,
-              description: 'NFC 체크인 보상',
-            });
-
-          setCoinAwarded(true);
-          setReceivedToday(true);
-          await syncFromBackend();
-        } else {
-          setCoinAwarded(false);
-          setReceivedToday(true);
-        }
-      } catch (error: any) {
-        console.error("NFC 보상 처리 실패:", error);
+        setCoinAwarded(true);
+        setReceivedToday(true);
+        // 보상 지급 후 최종 UI 상태 동기화
+        await syncFromBackend();
+      } else {
+        setCoinAwarded(false);
+        setReceivedToday(true);
       }
+    } catch (error) {
+      console.error("NFC 보상 처리 실패:", error);
+      // 에러 시 다음 렌더링에서 재시도 가능하도록 플래그 리셋
+      isProcessingRef.current = false;
+    } finally {
       setIsLoading(false);
-    };
+    }
+  }, [syncFromBackend]);
 
+  useEffect(() => {
     processNfcReward();
-  }, [cardUid, syncFromBackend]);
+  }, [processNfcReward]);
 
   // report 카드 효과 스타일
   const cardClass = "bg-white rounded-xl shadow-sm";

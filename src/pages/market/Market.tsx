@@ -304,21 +304,21 @@ function MarketPage() {
             당신의 ADHD성향
           </h3>
           <Card className="w-full p-4">
-            <div className="flex flex-col items-center gap-3">
-              {/* 차트 영역 */}
+            <div className="flex flex-row items-center gap-4">
+              {/* 차트 영역 (왼쪽) */}
               <div className="shrink-0">
                 {!taken ? (
-                  <div className="w-28 h-28">
+                  <div className="w-24 h-24">
                     <QuestionHexagon />
                   </div>
                 ) : (
                   <ChartContainer
                     config={chartConfig}
-                    className="w-32 h-32"
+                    className="w-28 h-28"
                   >
                     <RadarChart
                       data={chartData}
-                      margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                      margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
                     >
                       <ChartTooltip
                         cursor={false}
@@ -334,7 +334,7 @@ function MarketPage() {
                               y={y}
                               textAnchor={textAnchor}
                               fill="#795549"
-                              fontSize={10}
+                              fontSize={9}
                               fontWeight={600}
                               dy={2}
                             >
@@ -355,8 +355,8 @@ function MarketPage() {
                 )}
               </div>
 
-              {/* 설명 + 버튼 영역 */}
-              <div className="w-full text-center">
+              {/* 설명 + 버튼 영역 (오른쪽) */}
+              <div className="flex-1 min-w-0">
                 <div
                   className={[
                     "text-[12px] leading-relaxed text-[#795549]/80 mb-3",

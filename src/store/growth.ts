@@ -19,8 +19,8 @@ interface GrowthState {
   isLoading: boolean;
 
   // 액션
-  fetchStats: () => Promise<void>;
-  fetchMoodLogs: () => Promise<void>;
+  fetchStats: (userId?: string) => Promise<void>;
+  fetchMoodLogs: (userId?: string) => Promise<void>;
   fetchAll: () => Promise<void>;
 }
 
@@ -34,17 +34,21 @@ export const useGrowthStore = create<GrowthState>((set, get) => ({
   moodLogs: [],
   isLoading: false,
 
-  // 통계 데이터 가져오기
-  fetchStats: async () => {
+  // 통계 데이터 가져오기 (userId를 파라미터로 받아 중복 getUser 방지)
+  fetchStats: async (userId?: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      let uid = userId;
+      if (!uid) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        uid = user.id;
+      }
 
       // 모든 daily_logs 가져오기
       const { data: logs, error } = await supabase
         .from('daily_logs')
         .select('date, completed_routines')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .order('date', { ascending: true });
 
       if (error) throw error;
@@ -121,11 +125,15 @@ export const useGrowthStore = create<GrowthState>((set, get) => ({
     }
   },
 
-  // 감정 기록 가져오기 (이번 달)
-  fetchMoodLogs: async () => {
+  // 감정 기록 가져오기 (이번 달, userId를 파라미터로 받아 중복 getUser 방지)
+  fetchMoodLogs: async (userId?: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      let uid = userId;
+      if (!uid) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        uid = user.id;
+      }
 
       // 이번 달의 시작과 끝
       const now = new Date();
@@ -135,7 +143,7 @@ export const useGrowthStore = create<GrowthState>((set, get) => ({
       const { data: logs, error } = await supabase
         .from('daily_logs')
         .select('date, mood')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .gte('date', startOfMonth)
         .lte('date', endOfMonth)
         .order('date', { ascending: true });
@@ -153,11 +161,21 @@ export const useGrowthStore = create<GrowthState>((set, get) => ({
     }
   },
 
-  // 모든 통계 데이터 가져오기
+  // 모든 통계 데이터 가져오기 (getUser 1회만 호출 후 병렬 실행)
   fetchAll: async () => {
     set({ isLoading: true });
     try {
-      await Promise.all([get().fetchStats(), get().fetchMoodLogs()]);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        set({ isLoading: false });
+        return;
+      }
+
+      // userId를 전달하여 중복 getUser 호출 방지 + 병렬 실행
+      await Promise.all([
+        get().fetchStats(user.id),
+        get().fetchMoodLogs(user.id)
+      ]);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     } finally {

@@ -1,626 +1,234 @@
-당신은 시니어 풀스택 개발자입니다.
-현재 프로젝트는 프론트엔드 React + React Router(+ Tailwind/shadcn/ui/lucide 가능)이며,
-백엔드는 NestJS를 사용합니다.
+IH*03*문성하
+munsungha
+오프라인 표시
 
-목표:
-프로필(Profile) 페이지에서 사용자의 “성향(주의력형/충동형/복합형/환경형/동기형/정서형)”을 클릭하거나
-“내 성향 보기/상세 보기” 버튼을 누르면,
-첨부된 샘플 이미지 스타일처럼 아래 4개 섹션을 가진 “성향별 상세 리포트 페이지”가 노출되도록 구현하세요.
+박성재 — 오후 3:09
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import XpBar from "@/components/common/XpBar";
+import { supabase } from "@/lib/supabase";
+import { useProgressStore } from "@/store/progress";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-필수 성향 타입(6종):
+message.txt
+8KB
 
-- attention(주의력형)
-- impulsive(충동형)
-- complex(복합형)
-- environment(환경형)
-- motivational(동기형)
-- emotional(정서형)
+﻿
+박성재
+9diin
+import { PrimaryPillButton } from "@/components/common/PillButton";
+import XpBar from "@/components/common/XpBar";
+import { supabase } from "@/lib/supabase";
+import { useProgressStore } from "@/store/progress";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { getGrowthStage } from "@/utils/traits";
 
-페이지 구성(이미지 스타일 참고):
-각 성향 페이지는 다음 섹션을 반드시 포함합니다.
+function RewardPage() {
+const { level, xp, xpToNext, syncFromBackend } = useProgressStore();
+const navigate = useNavigate();
+const [searchParams] = useSearchParams();
+const growth = getGrowthStage(level);
 
-1. "<성향명> 우세 타입" (특징 bullet 3~6개)
-2. "원인 분석" (짧은 설명 + 핵심 문장 강조)
-3. "추천 솔루션" (솔루션 요약 + 왜 효과적인지)
-4. "솔루션 구체화 방법" (TOP 4 같은 형태의 구체 행동 가이드)
+const [receivedToday, setReceivedToday] = useState(false);
+const [isLoading, setIsLoading] = useState(true);
+const [totalTagCount, setTotalTagCount] = useState(0);
+const [coinAwarded, setCoinAwarded] = useState(false);
 
-- 구체화 방법은 번호 리스트(1~4) + 각 항목에 짧은 실행법 bullet 포함
-- 텍스트 톤은 부드럽고 코칭형. 비난/단정 금지.
-- 강조 텍스트는 오렌지/포인트 컬러로 처리(이미지처럼).
+// StrictMode 중복 실행 및 비동기 경쟁 상태를 방지하기 위한 Ref
+const isProcessingRef = useRef(false);
 
-UI/UX 요구사항:
+// 로직을 useCallback으로 감싸서 종속성 관리
+const processNfcReward = useCallback(async () => {
+// 이미 처리 중이라면 중복 실행 방지
+if (isProcessingRef.current) return;
+isProcessingRef.current = true;
 
-- 모바일(세로)에서 보기 좋은 레이아웃 (max-w, 충분한 line-height)
-- 섹션별 Card 스타일 (shadcn Card or Tailwind card)
-- 제목은 굵게, 섹션 간 Separator 사용
-- lucide 아이콘(예: Sparkles/Brain/Target/Shield/Flame/Leaf 등)으로 섹션 시각 강화
-- 상단에 뒤로가기(프로필) 버튼
+    try {
+      setIsLoading(true);
 
-라우팅:
+      // 1. 세션 확인 및 초기 동기화
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-- React Router에 아래 중 하나로 라우트 추가
-  A) /profile/type/:type
-  B) /types/:type
-- type은 위 6개 enum만 허용. 잘못된 type이면 NotFound 또는 기본 페이지로 리다이렉트.
+      await syncFromBackend();
 
-데이터 구조(가장 중요한 구현 방식):
+      // 2. 오늘 날짜 및 데이터 조회
+      const today = new Date().toISOString().split('T')[0];
 
-- “성향별 리포트 내용”은 하드코딩 페이지 6개로 만들지 말고,
-  하나의 데이터 파일(JSON/TS 객체)로 관리하고,
-  공통 컴포넌트 1개(TypeReportPage)로 렌더링되게 하세요.
-  예:
-  src/data/typeReports.ts
-  export const TYPE_REPORTS = {
-  impulsive: {
-  title: "충동형 우세 타입",
-  traits: [...],
-  cause: { title: "원인 분석", paragraphs: [...], highlight: "..." },
-  solution: { title: "추천 솔루션", paragraphs: [...], bullets: [...] },
-  howto: {
-  title: "충동형 ADHD에게 특히 효과적인 솔루션 TOP 4",
-  items: [
-  { title: "...", bullets: [...] },
-  ...
-  ]
-  }
-  },
-  ...
-  }
+      // 병렬 조회를 통해 속도 최적화 및 에러 방지 (maybeSingle 사용)
+      const [historyRes, userRes] = await Promise.all([
+        supabase
+          .from('coin_history')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('type', 'earn')
+          .eq('description', 'NFC 체크인 보상')
+          .gte('created_at', today + 'T00:00:00')
+          .lt('created_at', today + 'T23:59:59')
+          .maybeSingle(), // 데이터가 없어도 에러를 던지지 않음
+        supabase
+          .from('users')
+          .select('total_tag_count, coin_balance, xp')
+          .eq('id', user.id)
+          .single()
+      ]);
 
-프로필 페이지 연결:
+      const alreadyCheckedIn = !!historyRes.data;
+      const userData = userRes.data;
+      const currentTagCount = userData?.total_tag_count || 0;
+      const currentCoinBalance = userData?.coin_balance || 0;
+      const currentXp = userData?.xp || 0;
 
-- 기존 Profile.tsx에 현재 사용자의 성향 결과(예: user.profile.type, 또는 테스트 결과)를 표시하고,
-  해당 성향 카드/버튼 클릭 시 /profile/type/{type} 로 이동하도록 연결하세요.
-- 이미 BranchingTest.tsx 같은 테스트 결과 페이지가 있으면,
-  그 결과로 저장된 성향(type)을 프로필에 반영되도록 연결(가능하면).
-- 성향 결과가 아직 없으면:
-  “아직 성향 테스트 결과가 없어요 → 테스트 하러가기” CTA 버튼 제공.
+      // 3. 조회수 증가 (항상 실행)
+      const newTagCount = currentTagCount + 1;
+      setTotalTagCount(newTagCount);
+      await supabase
+        .from('users')
+        .update({ total_tag_count: newTagCount })
+        .eq('id', user.id);
 
-백엔드(NestJS) 연동(선택 구현 — 프로젝트에 이미 user profile API가 있으면 반드시 연결):
+      // 4. 보상 지급 판단 (하루 1회)
+      if (!alreadyCheckedIn) {
+        const newCoinBalance = currentCoinBalance + 15;
+        const newXp = currentXp + 10;
 
-- 기존 유저 프로필에 type 필드가 없으면 추가:
-  - users 테이블에 dominant_type (varchar) 추가 또는 profile JSON에 포함
-- API 예:
-  - GET /api/me -> { dominantType: "impulsive" }
-  - PATCH /api/me -> { dominantType: "impulsive" }
-- 프론트는 /api/me로 dominantType을 받아서 프로필/리포트로 이어지게 함.
-- 단, MVP로는 프론트 로컬 상태로만 보여줘도 되지만,
-  이미 Nest + DB가 준비되어 있다면 저장까지 구현하세요.
+        await supabase
+          .from('users')
+          .update({ coin_balance: newCoinBalance, xp: newXp })
+          .eq('id', user.id);
 
-콘텐츠(초안은 당신이 작성):
+        await supabase
+          .from('coin_history')
+          .insert({
+            user_id: user.id,
+            type: 'earn',
+            amount: 15,
+            balance_after: newCoinBalance,
+            description: 'NFC 체크인 보상',
+          });
 
-- 6종 모두에 대해 “특징/원인/추천 솔루션/구체화 TOP4”를 한국어로 작성해 넣으세요.
-- 내용은 너무 길지 않게(모바일 기준):
-  - 특징 4~6줄
-  - 원인 분석 2~4문장
-  - 추천 솔루션 2~5문장
-  - TOP4: 각 항목당 2~4 bullet
-- 충동형(impulsive)은 사용자가 제공한 이미지 문구와 구조를 최대한 비슷하게 구성하세요.
-  (균형운동/중심잡기/전정계/소뇌/고유수용감각 등 키워드 활용 가능)
-- 나머지 타입도 같은 밀도로 “실행 가능한 솔루션” 중심으로 작성하세요.
-  예) 주의력형: 시각적 정리, 타이머, 1-task 환경, 외부 기억장치
-  환경형: 자극 차단, 환경 앵커, 장소 고정, 폰 격리
-  동기형: 보상 설계, 즉시 피드백, 난이도 쪼개기, NFC 루프
-  정서형: 감정 라벨링, 진정 루틴, 회복 문장, 반응 지연
-  복합형: 최소 루틴 1개, 환경+보상 동시, 실패복구 루틴, 우선순위 1개
+        setCoinAwarded(true);
+        setReceivedToday(true);
+        // 보상 지급 후 최종 UI 상태 동기화
+        await syncFromBackend();
+      } else {
+        setCoinAwarded(false);
+        setReceivedToday(true);
+      }
+    } catch (error) {
+      console.error("NFC 보상 처리 실패:", error);
+      // 에러 시 다음 렌더링에서 재시도 가능하도록 플래그 리셋
+      isProcessingRef.current = false;
+    } finally {
+      setIsLoading(false);
+    }
 
-파일 변경 산출물:
+}, [syncFromBackend]);
 
-1. 추가/수정 파일 목록
-2. 각 파일 전체 코드
-3. (선택) NestJS: 마이그레이션/엔티티/DTO/컨트롤러/서비스 코드
-4. 로컬 실행 및 동작 확인 절차
+useEffect(() => {
+processNfcReward();
+}, [processNfcReward]);
 
-시작 절차:
+// 기존 HTML/CSS 스타일 그대로 유지
+const cardClass = "bg-white rounded-xl shadow-sm";
 
-- 레포를 먼저 스캔해서:
-  - 라우터 위치(main.tsx/App.tsx)
-  - Profile.tsx 위치
-  - BranchingTest.tsx 및 기존 타입 페이지(AttentionType.tsx 등) 존재 여부
-  - UI 컴포넌트(shadcn) 사용 방식
-  - NestJS auth 방식(/api/me 존재 여부)
-    을 파악한 뒤, 기존 구조를 최대한 존중하여 구현하세요.
+return (
 
-주의:
+<div className="flex-1 flex flex-col justify-center px-4 py-6">
+<div className="flex flex-col gap-6">
+<div
+className={`flex flex-col items-center w-full max-w-md mx-auto gap-4 px-6 py-6`} >
+{isLoading ? (
+<div className="text-[#795549]">로딩 중...</div>
+) : coinAwarded ? (
+<>
+<div className="text-2xl text-[#795549] font-bold animate-bounce">
+코인+15 획득!
+</div>
+<div className="animate-[spin_2s_ease-in-out_1]">
+<img src="/assets/coin.svg" alt="coin" />
+</div>
+<div className="w-full text-center mt-0 text-[#795549]">
+당신의 한 작은 걸음이, 내일의 큰 변화가 됩니다.
+</div>
+<div className="text-sm text-[#795549]/70 mt-2">
+누적 조회수: {totalTagCount}회
+</div>
+</>
+) : receivedToday ? (
+<>
+<div className="text-2xl text-[#795549] font-bold">
+조회수 +1!
+</div>
+<div className="opacity-70">
+<img src="/assets/coin.svg" alt="coin" />
+</div>
+<div className="text-lg text-[#795549] font-semibold">
+누적 조회수: {totalTagCount}회
+</div>
+<div className="w-full text-center mt-0 text-[#795549]/70 text-sm">
+코인은 하루 1회만 지급됩니다
+</div>
+</>
+) : (
+<>
+<div className="text-2xl text-[#795549] font-bold animate-bounce">
+오늘의 보상
+</div>
+<div className="opacity-70">
+<img src="/assets/coin.svg" alt="coin" />
+</div>
+<div className="w-full text-center mt-0 text-[#795549]">
+NFC 태그를 찍어 코인을 받으세요!
+</div>
+{totalTagCount > 0 && (
+<div className="text-sm text-[#795549]/70 mt-2">
+누적 조회수: {totalTagCount}회
+</div>
+)}
+</>
+)}
+</div>
 
-- 타입스크립트 에러 없이 빌드 가능해야 합니다.
-- 하드코딩 중복(6페이지 복붙) 금지. 반드시 데이터 기반 단일 렌더러로 구현하세요.
-  추가 지시: 만약 AttentionType.tsx, ImpulsiveType.tsx 등 타입별 페이지가 이미 존재한다면,
-  그 파일들을 데이터 기반(TypeReportPage + typeReports.ts) 구조로 통합하고,
-  기존 파일은 라우팅에서 제거하거나, 새 구조를 래핑하는 thin wrapper로 최소화하세요.
-  좋아. Claude가 바로 typeReports.ts에 붙여넣고 화면을 렌더링할 수 있게, 6종 성향 콘텐츠를 “이미지처럼: 특징 → 원인 분석 → 추천 솔루션 → TOP4 구체화” 구조로 풀셋 만들어줄게.
+        <div
+          className={`flex flex-col items-center justify-center gap-4 w-full max-w-md mx-auto py-6`}
+        >
+          <div className="w-32 h-32 flex items-center justify-center">
+            <img
+              src={growth.asset}
+              alt=""
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+          <p className="text-[#795549]">{growth.text}</p>
+          <div className={`w-full ${cardClass} p-4`}>
+            <XpBar level={level} xp={xp} xpToNext={xpToNext} />
+          </div>
+        </div>
 
-아래 코드는 그대로 **src/data/typeReports.ts**로 저장하면 되는 형태야. (문구 톤은 코칭형 / 단정·비난 없음 / 실행 가능한 지시 중심)
-// src/data/typeReports.ts
-export type AdhdTypeKey =
-| "attention"
-| "impulsive"
-| "complex"
-| "environment"
-| "motivational"
-| "emotional";
+        <section className="w-full">
+          <PrimaryPillButton
+            className="w-full text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer"
+            onClick={() => navigate("/report")}
+          >
+            <span aria-hidden>✏️</span>
+            <span>기록하러 가기 →</span>
+          </PrimaryPillButton>
 
-export type TypeReport = {
-key: AdhdTypeKey;
-badge: string; // 페이지 상단 배지용
-pageTitle: string; // 예: "충동형 우세 타입"
-subtitle?: string; // 한 줄 요약
-traits: string[]; // 특징 bullet
-cause: {
-title: string;
-paragraphs: string[];
-highlight?: string; // 강조 문장(오렌지)
-};
-solution: {
-title: string;
-paragraphs: string[];
-bullets?: string[];
-highlight?: string;
-};
-howto: {
-title: string; // 예: "충동형 ADHD에게 특히 효과적인 솔루션 TOP 4"
-items: { title: string; bullets: string[] }[];
-};
-};
+          <p className="text-center text-[12px] text-[#795549]/70 mt-2">
+            오늘 하루 어땠나요? 알려줄래요?
+          </p>
+        </section>
+      </div>
+    </div>
 
-export const TYPE_REPORTS: Record<AdhdTypeKey, TypeReport> = {
-impulsive: {
-key: "impulsive",
-badge: "IMPULSIVE",
-pageTitle: "충동형 우세 타입",
-subtitle: "말·행동이 먼저 튀어나오고, ‘멈춤’이 어려운 날이 많아요.",
-traits: [
-"생각보다 말이 먼저 나오는 날이 있어요.",
-"가만히 있지 못하고 몸이 먼저 움직여요.",
-"기다림·순서·타이밍 조절이 어려워요.",
-"짜증/분노로 빨리 점프하기 쉬워요.",
-"장기 결과보다 ‘지금’ 선택이 더 강해요.",
-],
-cause: {
-title: "원인 분석",
-paragraphs: [
-"충동형은 ‘의지가 약해서’가 아니라, 브레이크가 늦게 걸리는 날이 많다는 뜻이에요.",
-"뇌가 ‘멈춤 → 선택 → 전환’으로 넘어가는 과정에서, 정지 신호가 약해지면 행동이 먼저 나가요.",
-],
-highlight: "핵심은 ‘브레이크 시스템’의 연습(정지-전환)입니다.",
-},
-solution: {
-title: "추천 솔루션",
-paragraphs: [
-"충동형에게는 ‘중심잡기(균형) 훈련’이 생각보다 강력해요.",
-"균형운동은 단순 체력 운동이 아니라, 몸을 통해 ‘멈춤/조절 회로’를 직접 훈련하는 방식이에요.",
-],
-bullets: [
-"소뇌: 움직임 미세 조절 + 감정 안정",
-"전정계: 위치/속도/방향 감각 → 과속 억제",
-"고유수용감각: “내 몸이 지금 어디 있지?” 인식 강화",
-],
-highlight: "이 3가지는 ‘행동 조절 능력’과 직접 연결돼요.",
-},
-howto: {
-title: "충동형 ADHD에게 특히 효과적인 균형훈련 TOP 4",
-items: [
-{
-title: "1. 한 발 서기 (Single-leg stance)",
-bullets: [
-"하루 1~2분 (양쪽 번갈아)",
-"눈 뜬 상태 → 익숙해지면 눈 감고 10초",
-"팁: 흔들리면 ‘멈춤 연습이 되고 있다’는 신호",
-],
-},
-{
-title: "2. 슬로우 스쿼트",
-bullets: [
-"5초 내려가기 + 5초 올라오기",
-"무게보다 ‘속도 통제’가 목표",
-"급하게 움직이고 싶은 욕구를 억제하는 훈련",
-],
-},
-{
-title: "3. 밸런스 패드/수건 위 중심잡기",
-bullets: [
-"발바닥 감각을 ‘또렷하게’ 만드는 연습",
-"30초 유지 × 3세트",
-"몸 안정 → 감정 안정으로 이어지는 날이 많아요",
-],
-},
-{
-title: "4. 런지 정지 유지",
-bullets: [
-"한 동작 후 3초 ‘정지’",
-"‘움직임 → 멈춤’ 전환을 반복 학습",
-"팁: 정지 순간에 호흡 1번 같이 넣기",
-],
-},
-],
-},
-},
+);
+}
 
-attention: {
-key: "attention",
-badge: "ATTENTION",
-pageTitle: "주의력형 우세 타입",
-subtitle: "시작은 하는데 ‘집중 유지’가 금방 새는 날이 많아요.",
-traits: [
-"해야 할 건 아는데, 집중이 오래 붙어있기 어려워요.",
-"정보/아이디어는 많은데, 우선순위가 자주 뒤집혀요.",
-"작은 알림/소음에도 흐름이 끊기기 쉬워요.",
-"멀티태스킹을 하다가 에너지가 빨리 소모돼요.",
-"마감이 가까워져야 집중이 붙는 경향이 있어요.",
-],
-cause: {
-title: "원인 분석",
-paragraphs: [
-"주의력형은 ‘집중력이 없다’기보다, 주의 자원이 외부 자극에 쉽게 분산되는 패턴이에요.",
-"뇌가 중요한 것과 덜 중요한 것을 자동으로 필터링하기 어려운 날이 생겨요.",
-],
-highlight: "핵심은 ‘주의 필터를 환경으로 대신 만들어주는 것’입니다.",
-},
-solution: {
-title: "추천 솔루션",
-paragraphs: [
-"주의력형은 ‘환경 + 시간 + 목표’를 단순하게 만들수록 성과가 좋아져요.",
-"집중은 의지가 아니라 ‘붙어있을 수 있게 설계’하는 기술에 가까워요.",
-],
-bullets: [
-"시각 정리: 화면/책상에 하나만 남기기",
-"시간 쪼개기: 짧은 스프린트로 시작",
-"외부 기억장치: 머리 대신 종이/체크리스트",
-],
-highlight: "집중은 ‘하나만 보이게 만들면’ 훨씬 쉬워져요.",
-},
-howto: {
-title: "주의력형에게 특히 효과적인 집중 설계 TOP 4",
-items: [
-{
-title: "1. 1-탭/1-화면 규칙",
-bullets: [
-"작업 중 탭은 1개만 유지",
-"참고자료는 ‘나중에’ 폴더로 저장만",
-"딴생각이 나면 메모 1줄만 남기고 복귀",
-],
-},
-{
-title: "2. 12분 집중 + 3분 정리",
-bullets: [
-"타이머 12분 → 끝나면 3분 정리(다음 행동 적기)",
-"“12분만”은 뇌가 덜 거부해요",
-"성공률이 올라가면 15분으로 확장",
-],
-},
-{
-title: "3. 시작 문장 1개 만들기",
-bullets: [
-"예: “지금은 제목만 적는다”",
-"처음 행동을 너무 크게 잡지 않기",
-"시작 문장을 플래너에 고정 문구로",
-],
-},
-{
-title: "4. 집중 앵커(자극 최소화 장소) 고정",
-bullets: [
-"집중할 때 쓰는 자리/카페/책상 한 곳 지정",
-"그곳에서만 타이머/플래너 사용",
-"장소가 ‘스위치’가 되도록 반복",
-],
-},
-],
-},
-},
-
-complex: {
-key: "complex",
-badge: "COMPLEX",
-pageTitle: "복합형 우세 타입",
-subtitle: "주의 분산 + 충동 + 감정/동기 흔들림이 같이 오는 날이 있어요.",
-traits: [
-"어떤 날은 집중이 안 되고, 어떤 날은 충동이 세요.",
-"기분/피로/환경에 따라 성과 편차가 크게 나타나요.",
-"시작-유지-마무리 중 ‘어디서든’ 흔들릴 수 있어요.",
-"계획을 세우면 안심되지만, 실행에서 무너질 때가 있어요.",
-"자기평가가 들쭉날쭉해져서 회복이 늦어질 때가 있어요.",
-],
-cause: {
-title: "원인 분석",
-paragraphs: [
-"복합형은 ‘한 가지 문제’가 아니라, 여러 요인이 겹쳐서 실행이 흔들리는 타입이에요.",
-"그래서 해결도 한 방이 아니라, “최소 시스템”을 먼저 만들어야 해요.",
-],
-highlight: "핵심은 ‘버티는 시스템’이 아니라 ‘다시 돌아오는 시스템’입니다.",
-},
-solution: {
-title: "추천 솔루션",
-paragraphs: [
-"복합형에게 가장 효과적인 건 ‘최소 루틴 1개 + 실패 복구 루틴’이에요.",
-"완벽한 하루를 만들기보다, 무너져도 다시 올라오게 설계해야 해요.",
-],
-bullets: [
-"최소 루틴 1개: 하루를 살리는 ‘핵심 1개’만 고정",
-"복구 트리거: 흔들리면 할 행동(10초~3분)을 미리 정하기",
-"환경/보상 동시: 자극 차단 + 즉시 보상을 함께 사용",
-],
-highlight: "복합형은 ‘할 수 있는 날’보다 ‘무너진 날의 구조’가 더 중요해요.",
-},
-howto: {
-title: "복합형에게 특히 효과적인 최소 시스템 TOP 4",
-items: [
-{
-title: "1. ‘오늘의 핵심 1개’ 고정",
-bullets: [
-"루틴을 1개만 고정(예: 약/물/10분 정리/산책)",
-"나머지는 옵션으로 내려놓기",
-"핵심 1개만 해도 ‘오늘은 성공’으로 기록",
-],
-},
-{
-title: "2. 실패 복구 카드(30초~3분)",
-bullets: [
-"무너짐 감지 시: 물 한 잔/창문 열기/세수/10회 스쿼트",
-"‘기분’이 아니라 ‘행동’으로 복귀",
-"플래너 첫 장에 고정",
-],
-},
-{
-title: "3. 일정 ‘감소 버튼’ 만들기",
-bullets: [
-"이행률 낮은 날은 ‘루틴을 줄이는’ 규칙 실행",
-"할 일 3개 → 1개로 자동 축소",
-"줄였다는 사실을 실패로 기록하지 않기",
-],
-},
-{
-title: "4. 저녁은 ‘정리’가 아니라 ‘종료’",
-bullets: [
-"저녁엔 기록 생략하고 종료 루틴만",
-"NFC만 터치하고 보상으로 마무리",
-"저녁까지 완벽하려고 하면 다음날이 무너져요",
-],
-},
-],
-},
-},
-
-environment: {
-key: "environment",
-badge: "ENVIRONMENT",
-pageTitle: "환경형 우세 타입",
-subtitle: "내 의지보다 ‘장소/자극’이 성과를 더 크게 흔드는 타입이에요.",
-traits: [
-"장소가 바뀌면 집중이 뚝 끊기거나 반대로 확 붙어요.",
-"소음/시각 자극/사람 유무에 영향을 많이 받아요.",
-"폰이 가까우면 계획이 쉽게 깨져요.",
-"정리되지 않은 공간에서 머리가 더 복잡해져요.",
-"좋은 환경에 들어가면 성과가 급상승하기도 해요.",
-],
-cause: {
-title: "원인 분석",
-paragraphs: [
-"환경형은 ‘내가 약해서’가 아니라, 뇌가 환경 신호에 강하게 반응하는 패턴이에요.",
-"그래서 환경을 바꾸는 건 ‘도망’이 아니라 전략이에요.",
-],
-highlight: "핵심은 ‘환경을 자동화된 코치로 만드는 것’입니다.",
-},
-solution: {
-title: "추천 솔루션",
-paragraphs: [
-"환경형은 ‘자극 차단’과 ‘시작 신호(앵커)’를 같이 쓰면 급격히 안정돼요.",
-"특히 플래너/NFC를 ‘정해진 장소’에 고정하면 실행이 쉬워져요.",
-],
-bullets: [
-"자극 차단: 시야에서 폰/알림 제거",
-"앵커 배치: 플래너/펜/카드 트레이를 한 곳에 고정",
-"장소 루틴: 특정 장소=특정 행동으로 연결",
-],
-highlight: "환경이 바뀌면 ‘의지’가 아니라 ‘규칙’이 일을 하게 돼요.",
-},
-howto: {
-title: "환경형에게 특히 효과적인 실행 환경 TOP 4",
-items: [
-{
-title: "1. ‘플래너 자리’ 한 곳 고정",
-bullets: [
-"플래너는 항상 같은 위치에 두기",
-"펜/카드 트레이/타이머도 같이 배치",
-"그 자리에 앉으면 ‘작성부터’ 자동 시작",
-],
-},
-{
-title: "2. 폰 격리 규칙(거리 만들기)",
-bullets: [
-"작업 시작 시 폰은 2m 이상 떨어뜨리기",
-"가능하면 다른 방/서랍/가방에 넣기",
-"알림은 아예 꺼두는 게 더 쉽습니다",
-],
-},
-{
-title: "3. 시각 자극 ‘1개만’ 남기기",
-bullets: [
-"책상 위에는 지금 하는 것만",
-"나머지는 박스/가방에 임시 수납",
-"정리 목표가 아니라 ‘주의 필터’가 목표",
-],
-},
-{
-title: "4. 시작 신호(앵커) 만들기",
-bullets: [
-"시작 음악 1곡/향 1개/타이머 버튼 1개",
-"이 신호를 ‘시작 버튼’처럼 반복",
-"뇌가 신호를 학습하면 시작 저항이 줄어요",
-],
-},
-],
-},
-},
-
-motivational: {
-key: "motivational",
-badge: "MOTIVATION",
-pageTitle: "동기형 우세 타입",
-subtitle: "의욕이 ‘있다가도’ 사라져요. 대신 보상이 있으면 다시 붙어요.",
-traits: [
-"해야 한다는 건 아는데 ‘시작 동력’이 안 붙을 때가 많아요.",
-"흥미 있는 건 몰입하지만, 재미 없으면 멈춰요.",
-"큰 목표는 좋은데, 중간 과정에서 동기가 꺼져요.",
-"즉시 피드백이 없으면 계속하기 어렵게 느껴져요.",
-"보상이 보이면 갑자기 실행력이 올라가요.",
-],
-cause: {
-title: "원인 분석",
-paragraphs: [
-"동기형은 ‘게으름’이 아니라, 보상 신호가 약한 과제에서 에너지가 급격히 떨어지는 타입이에요.",
-"그래서 동기는 ‘마음’이 아니라 ‘설계’로 올리는 게 효과적이에요.",
-],
-highlight: "핵심은 ‘즉시 보상 + 난이도 쪼개기’입니다.",
-},
-solution: {
-title: "추천 솔루션",
-paragraphs: [
-"동기형은 ‘완료 보상’보다 ‘시작 보상’이 더 중요해요.",
-"NFC 터치처럼 즉각적인 피드백 루프가 있으면 반복이 쉬워집니다.",
-],
-bullets: [
-"보상은 작아도 즉시여야 해요(XP/코인/애니메이션/사운드)",
-"난이도는 더 작게 쪼개야 시작 저항이 줄어요",
-"성공 기록은 ‘완료’가 아니라 ‘시작’에도 부여",
-],
-highlight: "동기형은 ‘해냈다’보다 ‘시작했다’가 더 큰 승리예요.",
-},
-howto: {
-title: "동기형에게 특히 효과적인 보상 루프 TOP 4",
-items: [
-{
-title: "1. 1분 시작 보상",
-bullets: [
-"작업 1분만 하면 XP 지급",
-"완료 조건을 낮춰서 시작 빈도를 늘리기",
-"시작이 잦아지면 지속은 따라옵니다",
-],
-},
-{
-title: "2. ‘난이도 3단계’ 버튼",
-bullets: [
-"기본/쉬움/초쉬움 3단계로 과제 준비",
-"힘든 날은 초쉬움으로 자동 전환",
-"전환 자체를 실패로 기록하지 않기",
-],
-},
-{
-title: "3. NFC 즉시 피드백(하루 1회 고정)",
-bullets: [
-"하루 1회만 터치해도 ‘성공’ 처리",
-"애니메이션/사운드/진동으로 즉시 보상",
-"‘하고 싶게’ 만드는 장치가 목적",
-],
-},
-{
-title: "4. 보상은 ‘기분’이 아니라 ‘규칙’",
-bullets: [
-"기분이 좋아서 하는 게 아니라, 규칙대로 받기",
-"보상은 작게, 꾸준히",
-"연속일수보다 ‘복귀’에 보상 주기",
-],
-},
-],
-},
-},
-
-emotional: {
-key: "emotional",
-badge: "EMOTIONAL",
-pageTitle: "정서형 우세 타입",
-subtitle: "감정이 바뀌면 실행도 같이 흔들려요. 그래서 감정 관리가 먼저예요.",
-traits: [
-"기분이 흔들리면 계획이 그대로 멈추는 날이 있어요.",
-"자책/불안/짜증이 올라오면 실행 난이도가 급상승해요.",
-"감정이 과해지면 ‘생각 → 행동’ 연결이 끊기기 쉬워요.",
-"괜찮아졌다가도 작은 자극에 다시 무너질 때가 있어요.",
-"반대로 안정된 날에는 실력이 확 올라가요.",
-],
-cause: {
-title: "원인 분석",
-paragraphs: [
-"정서형은 감정이 ‘문제’가 아니라, 감정이 실행 회로를 직접 흔드는 구조예요.",
-"이 타입은 ‘실행부터’ 밀어붙이면 더 지치고, 회복이 늦어질 수 있어요.",
-],
-highlight: "핵심은 ‘감정 라벨링 → 진정 → 작은 행동’ 순서입니다.",
-},
-solution: {
-title: "추천 솔루션",
-paragraphs: [
-"정서형에게는 ‘감정 이름 붙이기’와 ‘반응 지연’이 강력한 무기예요.",
-"감정을 없애려 하지 말고, 감정과 함께 움직이게 만드는 것이 목표예요.",
-],
-bullets: [
-"감정 라벨링: “지금 불안/짜증/피곤함이 올라왔다”",
-"진정 루틴: 호흡/몸 풀기/물/짧은 산책",
-"자기 대화: 자책 줄이고 회복 문장 늘리기",
-],
-highlight: "감정이 안정되면 실행은 ‘자동으로’ 따라오는 날이 많아요.",
-},
-howto: {
-title: "정서형에게 특히 효과적인 회복 루틴 TOP 4",
-items: [
-{
-title: "1. 10초 감정 라벨링",
-bullets: [
-"“지금은 (감정)이다” 한 문장으로 끝내기",
-"분석하지 말고 이름만 붙이기",
-"이름 붙이면 감정이 덜 폭주해요",
-],
-},
-{
-title: "2. 60초 진정 루틴",
-bullets: [
-"물 한 잔 + 어깨 내리기 + 4-6 호흡 3회",
-"감정이 ‘가라앉은 뒤’에 계획을 보세요",
-"진정이 먼저면 실행이 쉬워져요",
-],
-},
-{
-title: "3. ‘나에게 한마디’ 회복 문장",
-bullets: [
-"예: “오늘은 난이도가 높은 날이야”",
-"예: “작게라도 움직이면 충분해”",
-"자책 문장을 회복 문장으로 교체",
-],
-},
-{
-title: "4. 반응 지연(멈춤) 연습",
-bullets: [
-"짜증/불안이 올라오면 3초 정지",
-"바로 행동하지 않고 ‘한 번 숨’ 넣기",
-"이 3초가 하루를 바꾸는 날이 있어요",
-],
-},
-],
-},
-},
-};
-
-// 타입 라벨(프로필 카드 표기용)
-export const TYPE_LABELS: Record<AdhdTypeKey, string> = {
-attention: "주의력형",
-impulsive: "충동형",
-complex: "복합형",
-environment: "환경형",
-motivational: "동기형",
-emotional: "정서형",
-};
-
-// (선택) 추천 아이콘 키(렌더러에서 lucide icon 매핑용)
-export const TYPE_ICON_KEYS: Record<AdhdTypeKey, string> = {
-attention: "Focus",
-impulsive: "Zap",
-complex: "Layers",
-environment: "Home",
-motivational: "Flame",
-emotional: "HeartHandshake",
-};
-
-// (선택) 섹션 아이콘 키
-export const SECTION_ICON_KEYS = {
-traits: "Sparkles",
-cause: "Brain",
-solution: "Target",
-howto: "ListChecks",
-};
+export default RewardPage;
+message.txt
+8KB

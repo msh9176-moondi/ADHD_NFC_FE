@@ -30,11 +30,11 @@ function GrowthPage() {
     fetchAll: fetchStats,
   } = useGrowthStore();
 
-  // 페이지 로드 시 데이터 가져오기 (항상 최신 데이터 fetch)
+  // 페이지 로드 시 데이터 가져오기 (병렬 실행으로 속도 최적화)
   useEffect(() => {
     console.log('[Growth] 페이지 마운트 - 데이터 fetch 시작');
-    syncFromBackend();
-    fetchStats();
+    // 두 함수를 병렬로 실행하여 로딩 시간 단축
+    Promise.all([syncFromBackend(), fetchStats()]);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const growth = getGrowthStage(level);
