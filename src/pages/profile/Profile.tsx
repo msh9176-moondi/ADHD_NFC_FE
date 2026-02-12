@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/authStore";
 import { Card } from "@/components/ui/card";
 import { PrimaryPillButton } from "@/components/common/PillButton";
 import { StatCard } from "@/components/common";
@@ -56,6 +57,12 @@ function ProfilePage() {
   };
 
   const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   // progress store (나무 레벨, XP)
   const { level, xp: xpTotal, syncFromBackend: syncTree } = useProgressStore();
@@ -470,6 +477,17 @@ function ProfilePage() {
               <span>기록하러 가기 →</span>
             </PrimaryPillButton>
           </div>
+        </section>
+
+        {/* 로그아웃 */}
+        <section className="mt-10 mb-10">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full py-3 text-[13px] text-[#795549]/70 hover:text-[#795549] transition-colors"
+          >
+            로그아웃
+          </button>
         </section>
       </div>
     </div>
