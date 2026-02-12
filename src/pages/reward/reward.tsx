@@ -3,13 +3,12 @@ import XpBar from "@/components/common/XpBar";
 import { supabase } from "@/lib/supabase";
 import { useProgressStore } from "@/store/progress";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { getGrowthStage } from "@/utils/traits";
 
 function RewardPage() {
   const { level, xp, xpToNext, syncFromBackend } = useProgressStore();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const growth = getGrowthStage(level);
 
   const [receivedToday, setReceivedToday] = useState(false);
