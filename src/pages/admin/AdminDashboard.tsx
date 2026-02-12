@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Users, Activity, Package, CheckCircle2 } from 'lucide-react';
 import { MOODS } from '@/constants';
@@ -20,13 +20,53 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const [statsRes, productsRes] = await Promise.allSettled([
-        api.get<AdminStats>('/admin/dashboard'),
-        api.get<{ products: Product[] }>('/products'),
-      ]);
 
-      if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
-      if (productsRes.status === 'fulfilled') setProducts(productsRes.value.data.products);
+      try {
+        const today = new Date().toISOString().split('T')[0];
+
+        // 병렬로 데이터 조회
+        const [usersRes, newUsersRes, todayLogsRes, productsRes] = await Promise.all([
+          // 전체 회원 수
+          supabase.from('users').select('id', { count: 'exact', head: true }),
+          // 오늘 신규 회원 수
+          supabase
+            .from('users')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', today + 'T00:00:00')
+            .lt('created_at', today + 'T23:59:59'),
+          // 오늘 daily_logs
+          supabase
+            .from('daily_logs')
+            .select('mood')
+            .eq('date', today),
+          // 상품 목록
+          supabase.from('products').select('*'),
+        ]);
+
+        // 감정 분포 계산
+        const moodDistribution: Record<string, number> = {};
+        if (todayLogsRes.data) {
+          for (const log of todayLogsRes.data) {
+            if (log.mood) {
+              moodDistribution[log.mood] = (moodDistribution[log.mood] || 0) + 1;
+            }
+          }
+        }
+
+        setStats({
+          totalUsers: usersRes.count || 0,
+          newUsersToday: newUsersRes.count || 0,
+          todayLogs: todayLogsRes.data?.length || 0,
+          moodDistribution,
+        });
+
+        if (productsRes.data) {
+          setProducts(productsRes.data as Product[]);
+        }
+      } catch (error) {
+        console.error('관리자 대시보드 데이터 로드 실패:', error);
+      }
+
       setIsLoading(false);
     };
 
