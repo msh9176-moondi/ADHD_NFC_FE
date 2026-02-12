@@ -30,8 +30,8 @@ function RootLayout() {
         </aside>
 
         {/* 메인 영역 */}
-        <div className={`min-h-screen flex flex-col items-center ${bgColor}`}>
-          <div className="w-103 max-w-full flex flex-col flex-1 px-6 md:px-0">
+        <div className={`min-h-screen flex flex-col items-center w-full ${bgColor}`}>
+          <div className="w-full max-w-[412px] flex flex-col flex-1 px-4 md:px-0 mx-auto">
             <AppHeader />
 
             <main className="flex-1 w-full flex flex-col">
