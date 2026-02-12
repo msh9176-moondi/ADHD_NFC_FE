@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -7,6 +7,8 @@ import {
   ClipboardList,
   FileText,
   ArrowLeft,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -21,6 +23,7 @@ const NAV_ITEMS = [
 export default function AdminLayout() {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') {
@@ -30,10 +33,76 @@ export default function AdminLayout() {
 
   if (!isAuthenticated || user?.role !== 'admin') return null;
 
+  const handleNavClick = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <div className="min-h-screen flex bg-[#F5F0E5]">
-      {/* 사이드바 */}
-      <aside className="w-64 bg-[#5D4037] flex flex-col shrink-0">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#F5F0E5]">
+      {/* 모바일 헤더 */}
+      <header className="md:hidden bg-[#5D4037] px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#DBA67A] flex items-center justify-center">
+            <span className="text-base" aria-hidden>🌳</span>
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-white leading-tight">FLOCA</h1>
+            <p className="text-[10px] text-white/50">관리자 패널</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="w-10 h-10 flex items-center justify-center text-white"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </header>
+
+      {/* 모바일 메뉴 드롭다운 */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-[#5D4037] px-4 pb-4 space-y-1">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.Icon;
+            if (item.disabled) {
+              return (
+                <div key={item.to} className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/30">
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm flex-1">{item.label}</span>
+                  <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-white/40">준비중</span>
+                </div>
+              );
+            }
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={handleNavClick}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors ${
+                    isActive ? 'bg-white/15 text-white' : 'text-white/65'
+                  }`
+                }
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm">{item.label}</span>
+              </NavLink>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => { handleNavClick(); navigate('/profile'); }}
+            className="w-full flex items-center gap-3 text-white/55 text-sm px-4 py-2.5 rounded-xl"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>앱으로 돌아가기</span>
+          </button>
+        </div>
+      )}
+
+      {/* 데스크탑 사이드바 */}
+      <aside className="hidden md:flex w-64 bg-[#5D4037] flex-col shrink-0">
         <div className="p-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#DBA67A] flex items-center justify-center">
@@ -87,7 +156,7 @@ export default function AdminLayout() {
         <div className="p-4">
           <button
             type="button"
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/profile')}
             className="w-full flex items-center gap-2 text-white/55 hover:text-white text-sm transition-colors px-4 py-2.5 rounded-xl hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4" />

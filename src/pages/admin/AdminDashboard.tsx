@@ -94,29 +94,29 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* 헤더 */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#795549]">관리자 대시보드</h1>
-        <p className="text-sm text-[#795549]/55 mt-1">{dateStr}</p>
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-[#795549]">관리자 대시보드</h1>
+        <p className="text-xs md:text-sm text-[#795549]/55 mt-1">{dateStr}</p>
       </div>
 
       {/* 요약 카드 4개 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6 md:mb-8">
         {statCards.map((card) => {
           const Icon = card.Icon;
           return (
-            <div key={card.key} className="bg-white rounded-2xl p-5 shadow-sm border border-[#DBA67A]/15">
+            <div key={card.key} className="bg-white rounded-xl md:rounded-2xl p-3 md:p-5 shadow-sm border border-[#DBA67A]/15">
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-[#795549]/55">{card.label}</p>
-                  <p className="text-2xl font-bold text-[#795549] mt-1">
+                  <p className="text-[10px] md:text-xs font-semibold text-[#795549]/55">{card.label}</p>
+                  <p className="text-lg md:text-2xl font-bold text-[#795549] mt-0.5 md:mt-1">
                     {isLoading ? '—' : card.value.toLocaleString()}
                   </p>
-                  <p className="text-xs text-[#795549]/45 mt-1">{card.sub}</p>
+                  <p className="text-[10px] md:text-xs text-[#795549]/45 mt-0.5 md:mt-1 truncate">{card.sub}</p>
                 </div>
-                <div className={`w-10 h-10 rounded-xl ${card.bgColor} flex items-center justify-center shrink-0`}>
-                  <Icon className={`w-5 h-5 ${card.iconColor}`} />
+                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl ${card.bgColor} flex items-center justify-center shrink-0`}>
+                  <Icon className={`w-4 h-4 md:w-5 md:h-5 ${card.iconColor}`} />
                 </div>
               </div>
             </div>
@@ -125,9 +125,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* 하단 섹션: 감정 분포 + 상품 현황 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:gap-6">
         {/* 감정 분포 차트 */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#DBA67A]/15">
+        <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-[#DBA67A]/15">
           <h2 className="text-sm font-semibold text-[#795549]">오늘의 감정 분포</h2>
           <p className="text-xs text-[#795549]/45 mb-4">전체 사용자 기준</p>
 
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* 상품 현황 */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#DBA67A]/15">
+        <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-sm border border-[#DBA67A]/15">
           <h2 className="text-sm font-semibold text-[#795549]">상품 현황</h2>
           <p className="text-xs text-[#795549]/45 mb-4">상태별 상품 구성</p>
 
