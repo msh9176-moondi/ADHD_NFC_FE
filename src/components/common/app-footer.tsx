@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 const items = [
   { to: '/reward', label: '보상' },
@@ -8,10 +8,23 @@ const items = [
   { to: '/profile', label: '프로필' },
 ];
 
+// 크림색 배경을 사용하는 페이지 경로
+const CREAM_BG_PATHS = ['/reward', '/report', '/market'];
+
 function AppFooter() {
+  const location = useLocation();
+
+  // 현재 경로가 크림색 배경 페이지인지 확인
+  const isCreamBg = CREAM_BG_PATHS.some(
+    (path) =>
+      location.pathname === path || location.pathname.startsWith(path + '/'),
+  );
+
+  const bgColor = isCreamBg ? 'bg-[#F5F0E5]' : 'bg-white';
+
   return (
     <footer
-      className="sticky bottom-0 z-50 w-full bg-[#F5F0E5]"
+      className={`sticky bottom-0 z-50 w-full ${bgColor}`}
       style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
     >
       <nav className="w-full">
