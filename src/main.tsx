@@ -1,7 +1,18 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+
+// 페이지 이동 시 스크롤 맨 위로 이동
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 import './index.css';
 import App from './App.tsx';
@@ -53,6 +64,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+      <ScrollToTop />
       <AuthInitializer>
       <Routes>
         {/* ✅ Auth: 헤더/푸터 없이 */}
