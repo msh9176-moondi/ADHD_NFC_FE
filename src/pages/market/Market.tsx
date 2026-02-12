@@ -304,7 +304,7 @@ function MarketPage() {
             당신의 ADHD성향
           </h3>
           <Card className="w-full py-5 px-4">
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-1">
               {/* 차트 영역 (왼쪽) */}
               <div className="w-[120px] h-[120px] shrink-0 flex items-center justify-center">
                 {!taken ? (
