@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { Search, Plus, X, AlertTriangle } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -121,8 +121,40 @@ export default function AdminRoutines() {
     const fetchRoutines = async () => {
       setIsLoading(true);
       try {
-        const res = await api.get<{ routines: AdminRoutine[] }>('/admin/routines');
-        setRoutines(res.data.routines);
+        // 루틴 목록 조회
+        const { data: routinesData, error: routinesError } = await supabase
+          .from('routines')
+          .select('*')
+          .order('order', { ascending: true });
+
+        if (routinesError) throw routinesError;
+
+        // 완료 횟수 계산을 위해 daily_logs에서 completed_routines 집계
+        const { data: logsData } = await supabase
+          .from('daily_logs')
+          .select('completed_routines');
+
+        const completionCounts: Record<string, number> = {};
+        if (logsData) {
+          for (const log of logsData) {
+            const routineIds = log.completed_routines || [];
+            for (const rid of routineIds) {
+              completionCounts[rid] = (completionCounts[rid] || 0) + 1;
+            }
+          }
+        }
+
+        const mappedRoutines: AdminRoutine[] = (routinesData || []).map((r) => ({
+          id: r.id,
+          title: r.title || '',
+          subtitle: r.subtitle || '',
+          emoji: r.emoji || '',
+          isActive: r.is_active !== false,
+          order: r.order || 0,
+          totalCompletions: completionCounts[r.id] || 0,
+        }));
+
+        setRoutines(mappedRoutines);
       } catch (error) {
         console.error('[Admin] 루틴 목록 로드 실패:', error);
         setRoutines([]);
@@ -188,8 +220,31 @@ export default function AdminRoutines() {
     if (!validate()) return;
     setActionLoading(true);
     try {
-      const res = await api.post<AdminRoutine>('/admin/routines', form);
-      setRoutines((prev) => [...prev, res.data]);
+      const { data, error } = await supabase
+        .from('routines')
+        .insert({
+          title: form.title,
+          subtitle: form.subtitle,
+          emoji: form.emoji,
+          is_active: form.isActive,
+          order: form.order,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newRoutine: AdminRoutine = {
+        id: data.id,
+        title: data.title || '',
+        subtitle: data.subtitle || '',
+        emoji: data.emoji || '',
+        isActive: data.is_active !== false,
+        order: data.order || 0,
+        totalCompletions: 0,
+      };
+
+      setRoutines((prev) => [...prev, newRoutine].sort((a, b) => a.order - b.order));
       closePanel();
     } catch (error) {
       console.error('[Admin] 루틴 추가 실패:', error);
@@ -203,9 +258,33 @@ export default function AdminRoutines() {
     if (!validate() || !selectedRoutine) return;
     setActionLoading(true);
     try {
-      const res = await api.put<AdminRoutine>(`/admin/routines/${selectedRoutine.id}`, form);
-      setRoutines((prev) => prev.map((r) => (r.id === selectedRoutine.id ? res.data : r)));
-      setSelectedRoutine(res.data);
+      const { data, error } = await supabase
+        .from('routines')
+        .update({
+          title: form.title,
+          subtitle: form.subtitle,
+          emoji: form.emoji,
+          is_active: form.isActive,
+          order: form.order,
+        })
+        .eq('id', selectedRoutine.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedRoutine: AdminRoutine = {
+        id: data.id,
+        title: data.title || '',
+        subtitle: data.subtitle || '',
+        emoji: data.emoji || '',
+        isActive: data.is_active !== false,
+        order: data.order || 0,
+        totalCompletions: selectedRoutine.totalCompletions,
+      };
+
+      setRoutines((prev) => prev.map((r) => (r.id === selectedRoutine.id ? updatedRoutine : r)));
+      setSelectedRoutine(updatedRoutine);
     } catch (error) {
       console.error('[Admin] 루틴 수정 실패:', error);
       setFormError('루틴 수정에 실패했습니다');
@@ -218,7 +297,13 @@ export default function AdminRoutines() {
     if (!selectedRoutine) return;
     setActionLoading(true);
     try {
-      await api.delete(`/admin/routines/${selectedRoutine.id}`);
+      const { error } = await supabase
+        .from('routines')
+        .delete()
+        .eq('id', selectedRoutine.id);
+
+      if (error) throw error;
+
       setRoutines((prev) => prev.filter((r) => r.id !== selectedRoutine.id));
       closePanel();
     } catch (error) {
@@ -231,14 +316,14 @@ export default function AdminRoutines() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="p-8 flex gap-6 min-h-full">
+    <div className="p-4 md:p-8 flex flex-col md:flex-row gap-4 md:gap-6 min-h-full">
       {/* ── 좌측: 루틴 목록 ── */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#795549]">루틴 관리</h1>
-            <p className="text-sm text-[#795549]/55 mt-1">전체 {routines.length}개</p>
+            <h1 className="text-xl md:text-2xl font-bold text-[#795549]">루틴 관리</h1>
+            <p className="text-xs md:text-sm text-[#795549]/55 mt-1">전체 {routines.length}개</p>
           </div>
 
           <button
@@ -268,7 +353,7 @@ export default function AdminRoutines() {
         </div>
 
         {/* 상태 필터 */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {STATUS_FILTERS.map((filter) => (
             <button
               key={filter.value}
@@ -286,9 +371,9 @@ export default function AdminRoutines() {
         </div>
 
         {/* 루틴 테이블 */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-hidden flex flex-col">
-          {/* 테이블 헤더 */}
-          <div className="grid grid-cols-[2.5rem_1fr_6rem_7rem] gap-3 items-center px-4 py-3 border-b border-[#DBA67A]/15 bg-[#F5F0E5]/60">
+        <div className="flex-1 bg-white rounded-xl md:rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-hidden flex flex-col">
+          {/* 테이블 헤더 (데스크탑만) */}
+          <div className="hidden md:grid grid-cols-[2.5rem_1fr_6rem_7rem] gap-3 items-center px-4 py-3 border-b border-[#DBA67A]/15 bg-[#F5F0E5]/60">
             <div className="text-xs font-semibold text-[#795549]/55">#</div>
             <div className="text-xs font-semibold text-[#795549]/55">루틴</div>
             <div className="text-xs font-semibold text-[#795549]/55">상태</div>
@@ -315,15 +400,31 @@ export default function AdminRoutines() {
                     key={routine.id}
                     type="button"
                     onClick={() => (isSelected && panelMode === 'edit') ? closePanel() : openEdit(routine)}
-                    className={`w-full grid grid-cols-[2.5rem_1fr_6rem_7rem] gap-3 items-center px-4 py-3.5 border-b border-[#DBA67A]/10 text-left transition-colors ${
+                    className={`w-full flex md:grid md:grid-cols-[2.5rem_1fr_6rem_7rem] gap-3 items-center px-4 py-3.5 border-b border-[#DBA67A]/10 text-left transition-colors ${
                       isSelected ? 'bg-[#F5F0E5]' : 'hover:bg-[#F5F0E5]/50'
                     }`}
                   >
-                    {/* 순서 */}
-                    <div className="text-xs font-semibold text-[#795549]/45">{routine.order}</div>
+                    {/* 이모지 (모바일에서는 순서 대신 이모지만) */}
+                    <div className="w-8 h-8 rounded-lg bg-[#F5F0E5] flex items-center justify-center shrink-0 md:hidden">
+                      <span className="text-base" aria-hidden>{routine.emoji}</span>
+                    </div>
 
-                    {/* 이모지 + 이름 */}
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    {/* 데스크탑: 순서 */}
+                    <div className="hidden md:block text-xs font-semibold text-[#795549]/45">{routine.order}</div>
+
+                    {/* 모바일: 루틴명 + 상태 */}
+                    <div className="flex-1 min-w-0 md:hidden">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm text-[#795549] font-medium truncate">{routine.title}</p>
+                        <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
+                          {badge.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#795549]/50 truncate mt-0.5">{routine.totalCompletions.toLocaleString()}회 완료</p>
+                    </div>
+
+                    {/* 데스크탑: 이모지 + 이름 */}
+                    <div className="hidden md:flex items-center gap-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-lg bg-[#F5F0E5] flex items-center justify-center shrink-0">
                         <span className="text-base" aria-hidden>{routine.emoji}</span>
                       </div>
@@ -333,15 +434,15 @@ export default function AdminRoutines() {
                       </div>
                     </div>
 
-                    {/* 상태 배지 */}
-                    <div>
+                    {/* 데스크탑: 상태 배지 */}
+                    <div className="hidden md:block">
                       <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
                         {badge.label}
                       </span>
                     </div>
 
-                    {/* 완료 횟수 */}
-                    <div className="text-xs font-semibold text-[#795549]/55 text-right">
+                    {/* 데스크탑: 완료 횟수 */}
+                    <div className="hidden md:block text-xs font-semibold text-[#795549]/55 text-right">
                       {routine.totalCompletions.toLocaleString()}회
                     </div>
                   </button>
@@ -354,8 +455,8 @@ export default function AdminRoutines() {
 
       {/* ── 우측: 추가 / 편집 패널 ── */}
       {panelMode !== 'closed' && (
-        <aside className="w-80 shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-y-auto">
+        <aside className="w-full md:w-80 shrink-0">
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-y-auto">
             {/* 패널 헤더 */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#DBA67A]/15">
               <h2 className="text-sm font-bold text-[#795549]">

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { Search, Plus, X, AlertTriangle } from 'lucide-react';
 import type { Product } from '@/store/products';
 
@@ -145,13 +145,31 @@ export default function AdminProducts() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // ── 상품 목록 fetch (기존 /products 활용) ────────────────────────────────────
+  // ── 상품 목록 fetch ────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        const res = await api.get<{ products: Product[] }>('/products');
-        setProducts(res.data.products);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const mappedProducts: Product[] = (data || []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description || '',
+          imageUrl: p.image_url || '',
+          price: p.price || 0,
+          category: p.category || '',
+          recommendedTrait: p.recommended_trait || '',
+          isAvailable: p.is_available !== false,
+          isComingSoon: p.is_coming_soon === true,
+        }));
+
+        setProducts(mappedProducts);
       } catch (error) {
         console.error('[Admin] 상품 목록 로드 실패:', error);
         setProducts([]);
@@ -217,11 +235,36 @@ export default function AdminProducts() {
     if (!validate()) return;
     setActionLoading(true);
     try {
-      const res = await api.post<Product>('/admin/products', {
-        ...form,
-        recommendedTrait: form.recommendedTrait || null,
-      });
-      setProducts((prev) => [...prev, res.data]);
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          name: form.name,
+          description: form.description,
+          image_url: form.imageUrl,
+          price: form.price,
+          category: form.category,
+          recommended_trait: form.recommendedTrait || null,
+          is_available: form.isAvailable,
+          is_coming_soon: form.isComingSoon,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newProduct: Product = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        imageUrl: data.image_url || '',
+        price: data.price || 0,
+        category: data.category || '',
+        recommendedTrait: data.recommended_trait || '',
+        isAvailable: data.is_available !== false,
+        isComingSoon: data.is_coming_soon === true,
+      };
+
+      setProducts((prev) => [newProduct, ...prev]);
       closePanel();
     } catch (error) {
       console.error('[Admin] 상품 추가 실패:', error);
@@ -235,12 +278,38 @@ export default function AdminProducts() {
     if (!validate() || !selectedProduct) return;
     setActionLoading(true);
     try {
-      const res = await api.put<Product>(`/admin/products/${selectedProduct.id}`, {
-        ...form,
-        recommendedTrait: form.recommendedTrait || null,
-      });
-      setProducts((prev) => prev.map((p) => (p.id === selectedProduct.id ? res.data : p)));
-      setSelectedProduct(res.data);
+      const { data, error } = await supabase
+        .from('products')
+        .update({
+          name: form.name,
+          description: form.description,
+          image_url: form.imageUrl,
+          price: form.price,
+          category: form.category,
+          recommended_trait: form.recommendedTrait || null,
+          is_available: form.isAvailable,
+          is_coming_soon: form.isComingSoon,
+        })
+        .eq('id', selectedProduct.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedProduct: Product = {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        imageUrl: data.image_url || '',
+        price: data.price || 0,
+        category: data.category || '',
+        recommendedTrait: data.recommended_trait || '',
+        isAvailable: data.is_available !== false,
+        isComingSoon: data.is_coming_soon === true,
+      };
+
+      setProducts((prev) => prev.map((p) => (p.id === selectedProduct.id ? updatedProduct : p)));
+      setSelectedProduct(updatedProduct);
     } catch (error) {
       console.error('[Admin] 상품 수정 실패:', error);
       setFormError('상품 수정에 실패했습니다');
@@ -253,7 +322,13 @@ export default function AdminProducts() {
     if (!selectedProduct) return;
     setActionLoading(true);
     try {
-      await api.delete(`/admin/products/${selectedProduct.id}`);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', selectedProduct.id);
+
+      if (error) throw error;
+
       setProducts((prev) => prev.filter((p) => p.id !== selectedProduct.id));
       closePanel();
     } catch (error) {
@@ -266,14 +341,14 @@ export default function AdminProducts() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="p-8 flex gap-6 min-h-full">
+    <div className="p-4 md:p-8 flex flex-col md:flex-row gap-4 md:gap-6 min-h-full">
       {/* ── 좌측: 상품 목록 ── */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#795549]">상품 관리</h1>
-            <p className="text-sm text-[#795549]/55 mt-1">전체 {products.length}개</p>
+            <h1 className="text-xl md:text-2xl font-bold text-[#795549]">상품 관리</h1>
+            <p className="text-xs md:text-sm text-[#795549]/55 mt-1">전체 {products.length}개</p>
           </div>
 
           <button
@@ -303,7 +378,7 @@ export default function AdminProducts() {
         </div>
 
         {/* 상태 필터 */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {STATUS_FILTERS.map((filter) => (
             <button
               key={filter.value}
@@ -321,9 +396,9 @@ export default function AdminProducts() {
         </div>
 
         {/* 상품 테이블 */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-hidden flex flex-col">
-          {/* 테이블 헤더 */}
-          <div className="grid grid-cols-[3rem_1fr_5rem_1fr_1fr] gap-3 items-center px-4 py-3 border-b border-[#DBA67A]/15 bg-[#F5F0E5]/60">
+        <div className="flex-1 bg-white rounded-xl md:rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-hidden flex flex-col">
+          {/* 테이블 헤더 (데스크탑만) */}
+          <div className="hidden md:grid grid-cols-[3rem_1fr_5rem_1fr_1fr] gap-3 items-center px-4 py-3 border-b border-[#DBA67A]/15 bg-[#F5F0E5]/60">
             <div />
             <div className="text-xs font-semibold text-[#795549]/55">상품명</div>
             <div className="text-xs font-semibold text-[#795549]/55">가격</div>
@@ -352,33 +427,44 @@ export default function AdminProducts() {
                     key={product.id}
                     type="button"
                     onClick={() => (isSelected && panelMode === 'edit') ? closePanel() : openEdit(product)}
-                    className={`w-full grid grid-cols-[3rem_1fr_5rem_1fr_1fr] gap-3 items-center px-4 py-3 border-b border-[#DBA67A]/10 text-left transition-colors ${
+                    className={`w-full flex md:grid md:grid-cols-[3rem_1fr_5rem_1fr_1fr] gap-3 items-center px-4 py-3 border-b border-[#DBA67A]/10 text-left transition-colors ${
                       isSelected ? 'bg-[#F5F0E5]' : 'hover:bg-[#F5F0E5]/50'
                     }`}
                   >
                     {/* 상품 이미지 */}
-                    <div className="w-12 h-12 rounded-xl bg-[#F5F0E5] overflow-hidden flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-[#F5F0E5] overflow-hidden flex items-center justify-center shrink-0">
                       <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain" />
                     </div>
 
-                    {/* 상품명 + 카테고리 */}
-                    <div className="min-w-0">
+                    {/* 모바일: 상품명 + 가격 + 상태 */}
+                    <div className="flex-1 min-w-0 md:hidden">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm text-[#795549] font-medium truncate">{product.name}</p>
+                        <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
+                          {badge.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#795549]/50 mt-0.5">{product.price}원 · {product.category || '미분류'}</p>
+                    </div>
+
+                    {/* 데스크탑: 상품명 + 카테고리 */}
+                    <div className="hidden md:block min-w-0">
                       <p className="text-sm text-[#795549] font-medium truncate">{product.name}</p>
                       <p className="text-xs text-[#795549]/45">{product.category || '카테고리 미설정'}</p>
                     </div>
 
-                    {/* 가격 */}
-                    <div className="text-sm font-semibold text-[#795549]">{product.price}</div>
+                    {/* 데스크탑: 가격 */}
+                    <div className="hidden md:block text-sm font-semibold text-[#795549]">{product.price}</div>
 
-                    {/* 상태 배지 */}
-                    <div>
+                    {/* 데스크탑: 상태 배지 */}
+                    <div className="hidden md:block">
                       <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${badge.bg} ${badge.text}`}>
                         {badge.label}
                       </span>
                     </div>
 
-                    {/* 추천 성향 */}
-                    <div className="text-xs text-[#795549]/55">
+                    {/* 데스크탑: 추천 성향 */}
+                    <div className="hidden md:block text-xs text-[#795549]/55">
                       {product.recommendedTrait ? (TRAIT_LABELS[product.recommendedTrait] || product.recommendedTrait) : '—'}
                     </div>
                   </button>
@@ -391,10 +477,10 @@ export default function AdminProducts() {
 
       {/* ── 우측: 추가 / 편집 패널 ── */}
       {panelMode !== 'closed' && (
-        <aside className="w-80 shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-y-auto">
+        <aside className="w-full md:w-80 shrink-0">
+          <div className="bg-white rounded-xl md:rounded-2xl shadow-sm border border-[#DBA67A]/15 overflow-y-auto">
             {/* 패널 헤더 */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#DBA67A]/15">
+            <div className="flex items-center justify-between px-4 md:px-5 py-3 md:py-4 border-b border-[#DBA67A]/15">
               <h2 className="text-sm font-bold text-[#795549]">
                 {panelMode === 'add' ? '새 상품 추가' : '상품 편집'}
               </h2>

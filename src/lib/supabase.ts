@@ -135,6 +135,20 @@ export type Database = {
         Insert: Omit<Database["public"]["Tables"]["ai_monthly_reports"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["ai_monthly_reports"]["Insert"]>;
       };
+      routines: {
+        Row: {
+          id: string;
+          title: string;
+          subtitle: string | null;
+          emoji: string;
+          is_active: boolean;
+          order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["routines"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["routines"]["Insert"]>;
+      };
     };
   };
 };
